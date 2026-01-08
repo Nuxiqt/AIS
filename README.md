@@ -29,9 +29,10 @@ This repository contains an installation script that automatically sets up your 
 - **yay** - AUR helper for easy package management
 
 ### Graphics & Compatibility Libraries
-- Vulkan drivers (Mesa, NVIDIA)
+- Vulkan drivers and tools (Mesa, NVIDIA, `vulkan-tools`)
 - VKD3D (DirectX 12 to Vulkan)
 - OpenCL support
+- Mesa tooling (`mesa-utils`) and OpenCL implementation (`opencl-mesa`)
 - Additional Wine dependencies and 32-bit libraries
 
 ## Usage
@@ -114,6 +115,7 @@ Feel free to edit `install.sh` to add or remove packages according to your needs
 
 - **Official Repos**: Steam, Lutris, Wine Staging, Winetricks, GameMode, MangoHud, Gamescope, OBS Studio, protontricks, DXVK, Vulkan drivers, Mesa, VKD3D
 - **AUR**: yay, Vesktop, Waterfox, ProtonUp-Qt
+- **Mesa tools**: `mesa-utils`, `vulkan-tools`, `opencl-mesa`
 
 ## License
 

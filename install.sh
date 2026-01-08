@@ -115,13 +115,16 @@ print_status "Installing additional gaming libraries..."
 sudo pacman -S --needed --noconfirm \
     lib32-vulkan-icd-loader \
     vulkan-icd-loader \
+    vulkan-tools \
     lib32-mesa \
     mesa \
+    mesa-utils \
     lib32-vkd3d \
     vkd3d \
     dxvk \
     lib32-opencl-icd-loader \
-    opencl-icd-loader
+    opencl-icd-loader \
+    opencl-mesa
 
 # Optionally install NVIDIA utilities if NVIDIA GPU is detected
 if lspci | grep -i nvidia &> /dev/null; then
