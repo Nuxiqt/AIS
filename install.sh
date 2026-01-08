@@ -147,7 +147,7 @@ cat > ~/.local/share/Steam/steam_launch_options.txt << 'EOF'
 # For GameMode: gamemoderun %command%
 # For MangoHud: mangohud %command%
 # For both: gamemoderun mangohud %command%
-# For Gamescope: gamescope -f -w 1920 -h 1080 -- %command%
+# For Gamescope: gamescope -f -w 2560 -h 1440 -- %command%
 EOF
 
 print_status "Creating helpful aliases..."
