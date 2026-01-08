@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Arch Linux Gaming Setup Script
-# Run with: bash setup_gaming.sh
+# Run with: bash install.sh
 
 set -e
 
@@ -117,17 +117,19 @@ sudo pacman -S --needed --noconfirm \
     vulkan-icd-loader \
     lib32-mesa \
     mesa \
-    lib32-nvidia-utils \
-    nvidia-utils \
     lib32-vkd3d \
     vkd3d \
     dxvk \
     lib32-opencl-icd-loader \
     opencl-icd-loader
 
-# Install DXVK
-print_status "Installing DXVK..."
-sudo pacman -S --needed --noconfirm dxvk-bin || yay -S --needed --noconfirm dxvk-bin
+# Optionally install NVIDIA utilities if NVIDIA GPU is detected
+if lspci | grep -i nvidia &> /dev/null; then
+    print_status "NVIDIA GPU detected, installing NVIDIA utilities..."
+    sudo pacman -S --needed --noconfirm lib32-nvidia-utils nvidia-utils
+else
+    print_status "No NVIDIA GPU detected, skipping NVIDIA utilities"
+fi
 
 # Configure gamemode
 print_status "Configuring gamemode..."
