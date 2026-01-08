@@ -137,7 +137,7 @@ sudo usermod -aG gamemode $USER
 
 # Create Wine prefix with staging
 print_status "Creating Wine Staging prefix..."
-WINEPREFIX=~/.wine-staging WINEARCH=win64 wineboot
+WINEPREFIX=~/.wine-staging WINEARCH=win64 wineboot &> /dev/null || print_warning "Wine prefix creation encountered an issue, you may need to run it manually"
 
 # Enable GameMode for Steam
 print_status "Setting up Steam launch options helper..."
@@ -151,12 +151,17 @@ cat > ~/.local/share/Steam/steam_launch_options.txt << 'EOF'
 EOF
 
 print_status "Creating helpful aliases..."
-cat >> ~/.bashrc << 'EOF'
+if ! grep -q "# Gaming aliases" ~/.bashrc 2>/dev/null; then
+    cat >> ~/.bashrc << 'EOF'
 
 # Gaming aliases
 alias wine-staging='WINEPREFIX=~/.wine-staging wine'
 alias winetricks-staging='WINEPREFIX=~/.wine-staging winetricks'
 EOF
+    print_status "Gaming aliases added to ~/.bashrc"
+else
+    print_status "Gaming aliases already exist in ~/.bashrc"
+fi
 
 echo ""
 echo "================================================"
