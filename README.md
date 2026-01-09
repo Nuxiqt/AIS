@@ -16,6 +16,7 @@ This repository contains an installation script that automatically sets up your 
 - **Gamescope** - Gaming compositor from Valve
 - **GameMode** - System optimization for gaming (with 32-bit support)
 - **ProtonUp-Qt** - Easy Proton-GE version management
+- **Proton Plus** - Additional Proton compatibility tool
 - **protontricks** - Winetricks wrapper for Proton games
 
 ### Windows Compatibility
@@ -114,7 +115,7 @@ Feel free to edit `install.sh` to add or remove packages according to your needs
 ## Installed Package List
 
 - **Official Repos**: Steam, Lutris, Wine Staging, Winetricks, GameMode, MangoHud, Gamescope, OBS Studio, protontricks, DXVK, Vulkan drivers, Mesa, VKD3D
-- **AUR**: yay, Vesktop, Waterfox, ProtonUp-Qt
+- **AUR**: yay, Vesktop, Waterfox, ProtonUp-Qt, Proton Plus
 - **Mesa tools**: `mesa-utils`, `vulkan-tools`, `opencl-mesa`
 
 ## License

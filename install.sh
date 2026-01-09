@@ -106,6 +106,10 @@ yay -S --needed --noconfirm waterfox-g-bin
 print_status "Installing ProtonUp-Qt..."
 yay -S --needed --noconfirm protonup-qt
 
+# Install Proton Plus
+print_status "Installing Proton Plus..."
+yay -S --needed --noconfirm proton-plus-bin
+
 # Install protontricks
 print_status "Installing protontricks..."
 sudo pacman -S --needed --noconfirm protontricks
@@ -180,6 +184,7 @@ echo "  - Lutris"
 echo "  - protontricks"
 echo "  - OBS Studio"
 echo "  - ProtonUp-Qt"
+echo "  - Proton Plus"
 echo "  - GameScope"
 echo "  - MangoHud"
 echo "  - GameMode"
