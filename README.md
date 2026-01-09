@@ -2,6 +2,12 @@
 
 A collection of scripts to automate package installation on fresh Arch Linux installations, specifically tailored for gaming setups.
 
+## Scripts
+
+- **install.sh** - Main gaming environment setup script
+- **install-flatpak.sh** - Flatpak and Discover store manager setup
+- **install-gaming-mouse.sh** - Gaming mouse configuration (ratbagd & Piper)
+
 ## Features
 
 This repository contains an installation script that automatically sets up your Arch Linux system with essential gaming packages:
@@ -38,7 +44,7 @@ This repository contains an installation script that automatically sets up your 
 
 ## Usage
 
-### Quick Install
+### Quick Install - Gaming Setup
 
 Clone the repository and run the installation script:
 
@@ -49,7 +55,25 @@ chmod +x install.sh
 ./install.sh
 ```
 
-### What the Script Does
+### Flatpak and Discover Setup
+
+To install Flatpak with Discover store manager:
+
+```bash
+chmod +x install-flatpak.sh
+./install-flatpak.sh
+```
+
+### Gaming Mouse Configuration
+
+To install ratbagd and Piper for gaming mouse configuration:
+
+```bash
+chmod +x install-gaming-mouse.sh
+./install-gaming-mouse.sh
+```
+
+### What the Main Script Does
 
 1. Enables the multilib repository (required for 32-bit support)
 2. Updates your system with `pacman -Syu`

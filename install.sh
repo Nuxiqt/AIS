@@ -82,6 +82,16 @@ sudo pacman -S --needed --noconfirm \
     lib32-libpulse \
     lib32-alsa-plugins || print_warning "Some Wine packages failed to install, continuing..."
 
+# Verify Wine Staging installation
+if command -v wine &> /dev/null; then
+    wine_version=$(wine --version 2>&1)
+    if echo "$wine_version" | grep -qi "staging"; then
+        print_status "Wine Staging verified: $wine_version"
+    else
+        print_warning "Wine installed but not staging version: $wine_version"
+    fi
+fi
+
 # Install gaming packages from official repos
 print_status "Installing gaming packages from official repositories..."
 sudo pacman -S --needed --noconfirm \
@@ -93,6 +103,21 @@ sudo pacman -S --needed --noconfirm \
     lib32-mangohud \
     gamescope \
     obs-studio || print_warning "Some gaming packages failed to install, continuing..."
+
+# Verify gaming packages installation
+if command -v steam &> /dev/null; then
+    print_status "Steam verified: $(pacman -Q steam 2>/dev/null || echo 'version unknown')"
+fi
+if command -v lutris &> /dev/null; then
+    lutris_version=$(lutris --version 2>&1 | head -n1)
+    print_status "Lutris verified: $lutris_version"
+fi
+if command -v gamescope &> /dev/null; then
+    print_status "Gamescope verified: $(pacman -Q gamescope 2>/dev/null || echo 'version unknown')"
+fi
+if command -v mangohud &> /dev/null; then
+    print_status "MangoHud verified: $(pacman -Q mangohud 2>/dev/null || echo 'version unknown')"
+fi
 
 # Discord client selection
 echo ""
@@ -108,15 +133,27 @@ case $discord_choice in
     1)
         print_status "Installing Discord (official)..."
         sudo pacman -S --needed --noconfirm discord || print_warning "Discord installation failed, continuing..."
+        if command -v discord &> /dev/null; then
+            print_status "Discord verified: $(pacman -Q discord 2>/dev/null || echo 'version unknown')"
+        fi
         ;;
     2)
         print_status "Installing Vesktop..."
         yay -S --needed --noconfirm vesktop-bin || print_warning "Vesktop installation failed, continuing..."
+        if command -v vesktop &> /dev/null; then
+            print_status "Vesktop verified: $(pacman -Q vesktop-bin 2>/dev/null || echo 'installed')"
+        fi
         ;;
     3)
         print_status "Installing both Discord and Vesktop..."
         sudo pacman -S --needed --noconfirm discord || print_warning "Discord installation failed, continuing..."
         yay -S --needed --noconfirm vesktop-bin || print_warning "Vesktop installation failed, continuing..."
+        if command -v discord &> /dev/null; then
+            print_status "Discord verified: $(pacman -Q discord 2>/dev/null || echo 'version unknown')"
+        fi
+        if command -v vesktop &> /dev/null; then
+            print_status "Vesktop verified: $(pacman -Q vesktop-bin 2>/dev/null || echo 'installed')"
+        fi
         ;;
     4)
         print_status "Skipping Discord installation"
@@ -124,24 +161,40 @@ case $discord_choice in
     *)
         print_warning "Invalid choice, installing Discord (default)"
         sudo pacman -S --needed --noconfirm discord || print_warning "Discord installation failed, continuing..."
+        if command -v discord &> /dev/null; then
+            print_status "Discord verified: $(pacman -Q discord 2>/dev/null || echo 'version unknown')"
+        fi
         ;;
 esac
 
 # Install Waterfox
 print_status "Installing Waterfox..."
 yay -S --needed --noconfirm waterfox-g-bin || print_warning "Waterfox installation failed, continuing..."
+if command -v waterfox-g &> /dev/null; then
+    print_status "Waterfox verified: $(pacman -Q waterfox-g-bin 2>/dev/null || echo 'installed')"
+fi
 
 # Install ProtonUp-Qt
 print_status "Installing ProtonUp-Qt..."
 yay -S --needed --noconfirm protonup-qt || print_warning "ProtonUp-Qt installation failed, continuing..."
+if command -v protonup-qt &> /dev/null; then
+    print_status "ProtonUp-Qt verified: $(pacman -Q protonup-qt 2>/dev/null || echo 'installed')"
+fi
 
 # Install Proton Plus
 print_status "Installing Proton Plus..."
 yay -S --needed --noconfirm proton-plus-bin || print_warning "Proton Plus installation failed, continuing..."
+if pacman -Q proton-plus-bin &> /dev/null; then
+    print_status "Proton Plus verified: $(pacman -Q proton-plus-bin 2>/dev/null)"
+fi
 
 # Install protontricks
 print_status "Installing protontricks..."
 yay -S --needed --noconfirm protontricks || print_warning "protontricks installation failed, continuing..."
+if command -v protontricks &> /dev/null; then
+    protontricks_version=$(protontricks --version 2>&1 | head -n1)
+    print_status "protontricks verified: $protontricks_version"
+fi
 
 # Install additional gaming compatibility libraries
 print_status "Installing additional gaming libraries..."
@@ -158,6 +211,21 @@ sudo pacman -S --needed --noconfirm \
     lib32-opencl-icd-loader \
     opencl-icd-loader \
     opencl-mesa || print_warning "Some gaming libraries failed to install, continuing..."
+
+# Verify graphics libraries
+if command -v vulkaninfo &> /dev/null; then
+    print_status "Vulkan tools verified: $(pacman -Q vulkan-tools 2>/dev/null || echo 'version unknown')"
+fi
+if command -v glxinfo &> /dev/null; then
+    mesa_version=$(glxinfo 2>/dev/null | grep "OpenGL version" | head -n1 || echo "Mesa utilities installed")
+    print_status "Mesa verified: $mesa_version"
+fi
+if pacman -Q mesa &> /dev/null; then
+    print_status "Mesa package: $(pacman -Q mesa 2>/dev/null)"
+fi
+if pacman -Q dxvk &> /dev/null; then
+    print_status "DXVK verified: $(pacman -Q dxvk 2>/dev/null)"
+fi
 
 # Optionally install NVIDIA utilities if NVIDIA GPU is detected
 if lspci | grep -i nvidia &> /dev/null; then
