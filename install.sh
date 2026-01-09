@@ -181,11 +181,11 @@ if command -v protonup-qt &> /dev/null; then
     print_status "ProtonUp-Qt verified: $(pacman -Q protonup-qt 2>/dev/null || echo 'installed')"
 fi
 
-# Install Proton Plus
-print_status "Installing Proton Plus..."
-yay -S --needed --noconfirm proton-plus-bin || print_warning "Proton Plus installation failed, continuing..."
-if pacman -Q proton-plus-bin &> /dev/null; then
-    print_status "Proton Plus verified: $(pacman -Q proton-plus-bin 2>/dev/null)"
+# Install ProtonPlus
+print_status "Installing ProtonPlus..."
+yay -S --needed --noconfirm protonplus || print_warning "ProtonPlus installation failed, continuing..."
+if pacman -Q protonplus &> /dev/null; then
+    print_status "ProtonPlus verified: $(pacman -Q protonplus 2>/dev/null)"
 fi
 
 # Install protontricks
@@ -281,7 +281,7 @@ echo "  - Lutris"
 echo "  - protontricks"
 echo "  - OBS Studio"
 echo "  - ProtonUp-Qt"
-echo "  - Proton Plus"
+echo "  - ProtonPlus"
 echo "  - GameScope"
 echo "  - MangoHud"
 echo "  - GameMode"
