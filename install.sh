@@ -3,7 +3,7 @@
 # Arch Linux Gaming Setup Script
 # Run with: bash install.sh
 
-set -e
+# Note: Script will continue even if individual packages fail to install
 
 echo "================================================"
 echo "Arch Linux Gaming Environment Setup"
@@ -35,7 +35,7 @@ fi
 
 # Update system
 print_status "Updating system..."
-sudo pacman -Syu --noconfirm
+sudo pacman -Syu --noconfirm || print_warning "System update failed, continuing..."
 
 # Enable multilib repository (required for 32-bit support)
 print_status "Enabling multilib repository..."
@@ -50,7 +50,7 @@ fi
 
 # Install base-devel if not present (needed for AUR)
 print_status "Installing base-devel..."
-sudo pacman -S --needed --noconfirm base-devel git
+sudo pacman -S --needed --noconfirm base-devel git || print_warning "Failed to install base-devel, continuing..."
 
 # Install yay (AUR helper) if not present
 if ! command -v yay &> /dev/null; then
@@ -80,7 +80,7 @@ sudo pacman -S --needed --noconfirm \
     lib32-libgpg-error \
     lib32-sqlite \
     lib32-libpulse \
-    lib32-alsa-plugins
+    lib32-alsa-plugins || print_warning "Some Wine packages failed to install, continuing..."
 
 # Install gaming packages from official repos
 print_status "Installing gaming packages from official repositories..."
@@ -92,27 +92,27 @@ sudo pacman -S --needed --noconfirm \
     mangohud \
     lib32-mangohud \
     gamescope \
-    obs-studio
+    obs-studio || print_warning "Some gaming packages failed to install, continuing..."
 
 # Install Discord (Vesktop from AUR)
 print_status "Installing Vesktop (Discord client)..."
-yay -S --needed --noconfirm vesktop-bin
+yay -S --needed --noconfirm vesktop-bin || print_warning "Vesktop installation failed, continuing..."
 
 # Install Waterfox
 print_status "Installing Waterfox..."
-yay -S --needed --noconfirm waterfox-g-bin
+yay -S --needed --noconfirm waterfox-g-bin || print_warning "Waterfox installation failed, continuing..."
 
 # Install ProtonUp-Qt
 print_status "Installing ProtonUp-Qt..."
-yay -S --needed --noconfirm protonup-qt
+yay -S --needed --noconfirm protonup-qt || print_warning "ProtonUp-Qt installation failed, continuing..."
 
 # Install Proton Plus
 print_status "Installing Proton Plus..."
-yay -S --needed --noconfirm proton-plus-bin
+yay -S --needed --noconfirm proton-plus-bin || print_warning "Proton Plus installation failed, continuing..."
 
 # Install protontricks
 print_status "Installing protontricks..."
-sudo pacman -S --needed --noconfirm protontricks
+yay -S --needed --noconfirm protontricks || print_warning "protontricks installation failed, continuing..."
 
 # Install additional gaming compatibility libraries
 print_status "Installing additional gaming libraries..."
@@ -128,12 +128,12 @@ sudo pacman -S --needed --noconfirm \
     dxvk \
     lib32-opencl-icd-loader \
     opencl-icd-loader \
-    opencl-mesa
+    opencl-mesa || print_warning "Some gaming libraries failed to install, continuing..."
 
 # Optionally install NVIDIA utilities if NVIDIA GPU is detected
 if lspci | grep -i nvidia &> /dev/null; then
     print_status "NVIDIA GPU detected, installing NVIDIA utilities..."
-    sudo pacman -S --needed --noconfirm lib32-nvidia-utils nvidia-utils
+    sudo pacman -S --needed --noconfirm lib32-nvidia-utils nvidia-utils || print_warning "NVIDIA utilities installation failed, continuing..."
 else
     print_status "No NVIDIA GPU detected, skipping NVIDIA utilities"
 fi
