@@ -6,6 +6,7 @@ A collection of scripts to automate package installation on fresh Arch Linux ins
 
 - **install.sh** - Main gaming environment setup script
 - **install-flatpak.sh** - Flatpak and Discover store manager setup
+- **install-gaming-mouse.sh** - Gaming mouse configuration (ratbagd & Piper)
 
 ## Features
 
