@@ -64,16 +64,7 @@ chmod +x install-flatpak.sh
 ./install-flatpak.sh
 ```
 
-### Gaming Mouse Configuration
-
-To install ratbagd and Piper for gaming mouse configuration:
-
-```bash
-chmod +x install-gaming-mouse.sh
-./install-gaming-mouse.sh
-```
-
-### What the Main Script Does
+### What the Script Does
 
 1. Enables the multilib repository (required for 32-bit support)
 2. Updates your system with `pacman -Syu`
