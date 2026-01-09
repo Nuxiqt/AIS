@@ -235,6 +235,14 @@ else
     print_status "No NVIDIA GPU detected, skipping NVIDIA utilities"
 fi
 
+# Optionally install AMD Radeon Vulkan drivers if AMD GPU is detected
+if lspci | grep -i amd &> /dev/null || lspci | grep -i radeon &> /dev/null; then
+    print_status "AMD GPU detected, installing AMD Vulkan drivers..."
+    sudo pacman -S --needed --noconfirm vulkan-radeon lib32-vulkan-radeon || print_warning "AMD Vulkan drivers installation failed, continuing..."
+else
+    print_status "No AMD GPU detected, skipping AMD-specific Vulkan drivers"
+fi
+
 # Configure gamemode
 print_status "Configuring gamemode..."
 sudo usermod -aG gamemode $USER
