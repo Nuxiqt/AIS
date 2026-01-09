@@ -94,9 +94,38 @@ sudo pacman -S --needed --noconfirm \
     gamescope \
     obs-studio || print_warning "Some gaming packages failed to install, continuing..."
 
-# Install Discord (Vesktop from AUR)
-print_status "Installing Vesktop (Discord client)..."
-yay -S --needed --noconfirm vesktop-bin || print_warning "Vesktop installation failed, continuing..."
+# Discord client selection
+echo ""
+echo "Choose Discord client:"
+echo "  1) Discord (official client) [default]"
+echo "  2) Vesktop (modern Discord client with better features)"
+echo "  3) Both"
+echo "  4) Skip"
+read -p "Enter your choice (1-4) [1]: " discord_choice
+discord_choice=${discord_choice:-1}
+
+case $discord_choice in
+    1)
+        print_status "Installing Discord (official)..."
+        sudo pacman -S --needed --noconfirm discord || print_warning "Discord installation failed, continuing..."
+        ;;
+    2)
+        print_status "Installing Vesktop..."
+        yay -S --needed --noconfirm vesktop-bin || print_warning "Vesktop installation failed, continuing..."
+        ;;
+    3)
+        print_status "Installing both Discord and Vesktop..."
+        sudo pacman -S --needed --noconfirm discord || print_warning "Discord installation failed, continuing..."
+        yay -S --needed --noconfirm vesktop-bin || print_warning "Vesktop installation failed, continuing..."
+        ;;
+    4)
+        print_status "Skipping Discord installation"
+        ;;
+    *)
+        print_warning "Invalid choice, installing Discord (default)"
+        sudo pacman -S --needed --noconfirm discord || print_warning "Discord installation failed, continuing..."
+        ;;
+esac
 
 # Install Waterfox
 print_status "Installing Waterfox..."
@@ -178,7 +207,7 @@ echo ""
 echo "Installed packages:"
 echo "  - Wine Staging (instead of regular Wine)"
 echo "  - Steam"
-echo "  - Vesktop (Discord)"
+echo "  - Discord client (based on your choice)"
 echo "  - Waterfox"
 echo "  - Lutris"
 echo "  - protontricks"

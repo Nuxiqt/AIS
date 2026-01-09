@@ -9,7 +9,7 @@ This repository contains an installation script that automatically sets up your 
 ### Gaming Platforms
 - **Steam** - Gaming platform
 - **Lutris** - Open source gaming platform for Linux
-- **Vesktop** - Modern Discord client (instead of official Discord)
+- **Vesktop** or **Discord** - Discord client (user choice during installation)
 
 ### Gaming Tools
 - **MangoHud** - Gaming overlay for monitoring FPS and system resources (with 32-bit support)
