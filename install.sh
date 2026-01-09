@@ -169,9 +169,9 @@ esac
 
 # Install Waterfox
 print_status "Installing Waterfox..."
-yay -S --needed --noconfirm waterfox-g-bin || print_warning "Waterfox installation failed, continuing..."
-if command -v waterfox-g &> /dev/null; then
-    print_status "Waterfox verified: $(pacman -Q waterfox-g-bin 2>/dev/null || echo 'installed')"
+yay -S --needed --noconfirm waterfox-bin || print_warning "Waterfox installation failed, continuing..."
+if command -v waterfox &> /dev/null; then
+    print_status "Waterfox verified: $(pacman -Q waterfox-bin 2>/dev/null || echo 'installed')"
 fi
 
 # Install ProtonUp-Qt
