@@ -2,6 +2,11 @@
 
 A collection of scripts to automate package installation on fresh Arch Linux installations, specifically tailored for gaming setups.
 
+## Scripts
+
+- **install.sh** - Main gaming environment setup script
+- **install-flatpak.sh** - Flatpak and Discover store manager setup
+
 ## Features
 
 This repository contains an installation script that automatically sets up your Arch Linux system with essential gaming packages:
@@ -38,7 +43,7 @@ This repository contains an installation script that automatically sets up your 
 
 ## Usage
 
-### Quick Install
+### Quick Install - Gaming Setup
 
 Clone the repository and run the installation script:
 
@@ -47,6 +52,15 @@ git clone https://github.com/Nuxiqt/AIS.git
 cd AIS
 chmod +x install.sh
 ./install.sh
+```
+
+### Flatpak and Discover Setup
+
+To install Flatpak with Discover store manager:
+
+```bash
+chmod +x install-flatpak.sh
+./install-flatpak.sh
 ```
 
 ### What the Script Does
