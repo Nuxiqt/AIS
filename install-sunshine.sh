@@ -134,7 +134,7 @@ prompt_gpu_choice() {
   echo "  [1] Nvidia" >&2
   echo "  [2] AMD" >&2
   echo "  [3] Skip optional GPU deps" >&2
-  read -r -p "Choice (1/2/3): " choice
+  read -r -p "Choice (1-3): " choice
   case "${choice}" in
     1) echo "nvidia" ;;
     2) echo "amd" ;;
