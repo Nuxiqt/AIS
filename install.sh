@@ -1,13 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Arch Linux Gaming Setup Script
 # Run with: bash install.sh
 
 # Note: Script will continue even if individual packages fail to install
-
-echo "================================================"
-echo "Arch Linux Gaming Environment Setup"
-echo "================================================"
 
 # Colors for output
 RED='\033[0;31m'
@@ -15,23 +11,31 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-print_status() {
-    echo -e "${GREEN}[*]${NC} $1"
+print_header() {
+    echo "================================================"
+    echo "$1"
+    echo "================================================"
 }
 
-print_error() {
-    echo -e "${RED}[!]${NC} $1"
+print_status() {
+    echo -e "${GREEN}[*]${NC} $1"
 }
 
 print_warning() {
     echo -e "${YELLOW}[!]${NC} $1"
 }
 
+print_error() {
+    echo -e "${RED}[!]${NC} $1" >&2
+}
+
 # Check if running as root
-if [ "$EUID" -eq 0 ]; then 
+if [ "$EUID" -eq 0 ]; then
     print_error "Please do not run this script as root"
     exit 1
 fi
+
+print_header "Arch Linux Gaming Environment Setup"
 
 # Update system
 print_status "Updating system..."
@@ -53,7 +57,7 @@ print_status "Installing base-devel..."
 sudo pacman -S --needed --noconfirm base-devel git || print_warning "Failed to install base-devel, continuing..."
 
 # Install yay (AUR helper) if not present
-if ! command -v yay &> /dev/null; then
+if ! command -v yay &>/dev/null; then
     print_status "Installing yay AUR helper..."
     cd /tmp
     git clone https://aur.archlinux.org/yay.git
@@ -65,7 +69,7 @@ else
 fi
 
 # Remove regular wine if installed
-if pacman -Qi wine &> /dev/null; then
+if pacman -Qi wine &>/dev/null; then
     print_status "Removing regular wine package..."
     sudo pacman -Rns --noconfirm wine
 fi
@@ -83,7 +87,7 @@ sudo pacman -S --needed --noconfirm \
     lib32-alsa-plugins || print_warning "Some Wine packages failed to install, continuing..."
 
 # Verify Wine Staging installation
-if command -v wine &> /dev/null; then
+if command -v wine &>/dev/null; then
     wine_version=$(wine --version 2>&1)
     if echo "$wine_version" | grep -qi "staging"; then
         print_status "Wine Staging verified: $wine_version"
@@ -105,17 +109,17 @@ sudo pacman -S --needed --noconfirm \
     obs-studio || print_warning "Some gaming packages failed to install, continuing..."
 
 # Verify gaming packages installation
-if command -v steam &> /dev/null; then
+if command -v steam &>/dev/null; then
     print_status "Steam verified: $(pacman -Q steam 2>/dev/null || echo 'version unknown')"
 fi
-if command -v lutris &> /dev/null; then
+if command -v lutris &>/dev/null; then
     lutris_version=$(lutris --version 2>&1 | head -n1)
     print_status "Lutris verified: $lutris_version"
 fi
-if command -v gamescope &> /dev/null; then
+if command -v gamescope &>/dev/null; then
     print_status "Gamescope verified: $(pacman -Q gamescope 2>/dev/null || echo 'version unknown')"
 fi
-if command -v mangohud &> /dev/null; then
+if command -v mangohud &>/dev/null; then
     print_status "MangoHud verified: $(pacman -Q mangohud 2>/dev/null || echo 'version unknown')"
 fi
 
@@ -133,14 +137,14 @@ case $discord_choice in
     1)
         print_status "Installing Discord (official)..."
         sudo pacman -S --needed --noconfirm discord || print_warning "Discord installation failed, continuing..."
-        if command -v discord &> /dev/null; then
+        if command -v discord &>/dev/null; then
             print_status "Discord verified: $(pacman -Q discord 2>/dev/null || echo 'version unknown')"
         fi
         ;;
     2)
         print_status "Installing Vesktop..."
         yay -S --needed --noconfirm vesktop-bin || print_warning "Vesktop installation failed, continuing..."
-        if command -v vesktop &> /dev/null; then
+        if command -v vesktop &>/dev/null; then
             print_status "Vesktop verified: $(pacman -Q vesktop-bin 2>/dev/null || echo 'installed')"
         fi
         ;;
@@ -148,10 +152,10 @@ case $discord_choice in
         print_status "Installing both Discord and Vesktop..."
         sudo pacman -S --needed --noconfirm discord || print_warning "Discord installation failed, continuing..."
         yay -S --needed --noconfirm vesktop-bin || print_warning "Vesktop installation failed, continuing..."
-        if command -v discord &> /dev/null; then
+        if command -v discord &>/dev/null; then
             print_status "Discord verified: $(pacman -Q discord 2>/dev/null || echo 'version unknown')"
         fi
-        if command -v vesktop &> /dev/null; then
+        if command -v vesktop &>/dev/null; then
             print_status "Vesktop verified: $(pacman -Q vesktop-bin 2>/dev/null || echo 'installed')"
         fi
         ;;
@@ -161,7 +165,7 @@ case $discord_choice in
     *)
         print_warning "Invalid choice, installing Discord (default)"
         sudo pacman -S --needed --noconfirm discord || print_warning "Discord installation failed, continuing..."
-        if command -v discord &> /dev/null; then
+        if command -v discord &>/dev/null; then
             print_status "Discord verified: $(pacman -Q discord 2>/dev/null || echo 'version unknown')"
         fi
         ;;
@@ -170,28 +174,28 @@ esac
 # Install Waterfox
 print_status "Installing Waterfox..."
 yay -S --needed --noconfirm waterfox-bin || print_warning "Waterfox installation failed, continuing..."
-if command -v waterfox &> /dev/null; then
+if command -v waterfox &>/dev/null; then
     print_status "Waterfox verified: $(pacman -Q waterfox-bin 2>/dev/null || echo 'installed')"
 fi
 
 # Install ProtonUp-Qt
 print_status "Installing ProtonUp-Qt..."
 yay -S --needed --noconfirm protonup-qt || print_warning "ProtonUp-Qt installation failed, continuing..."
-if command -v protonup-qt &> /dev/null; then
+if command -v protonup-qt &>/dev/null; then
     print_status "ProtonUp-Qt verified: $(pacman -Q protonup-qt 2>/dev/null || echo 'installed')"
 fi
 
 # Install ProtonPlus
 print_status "Installing ProtonPlus..."
 yay -S --needed --noconfirm protonplus || print_warning "ProtonPlus installation failed, continuing..."
-if pacman -Q protonplus &> /dev/null; then
+if pacman -Q protonplus &>/dev/null; then
     print_status "ProtonPlus verified: $(pacman -Q protonplus 2>/dev/null)"
 fi
 
 # Install protontricks
 print_status "Installing protontricks..."
 yay -S --needed --noconfirm protontricks || print_warning "protontricks installation failed, continuing..."
-if command -v protontricks &> /dev/null; then
+if command -v protontricks &>/dev/null; then
     protontricks_version=$(protontricks --version 2>&1 | head -n1)
     print_status "protontricks verified: $protontricks_version"
 fi
@@ -213,22 +217,22 @@ sudo pacman -S --needed --noconfirm \
     opencl-mesa || print_warning "Some gaming libraries failed to install, continuing..."
 
 # Verify graphics libraries
-if command -v vulkaninfo &> /dev/null; then
+if command -v vulkaninfo &>/dev/null; then
     print_status "Vulkan tools verified: $(pacman -Q vulkan-tools 2>/dev/null || echo 'version unknown')"
 fi
-if command -v glxinfo &> /dev/null; then
+if command -v glxinfo &>/dev/null; then
     mesa_version=$(glxinfo 2>/dev/null | grep "OpenGL version" | head -n1 || echo "Mesa utilities installed")
     print_status "Mesa verified: $mesa_version"
 fi
-if pacman -Q mesa &> /dev/null; then
+if pacman -Q mesa &>/dev/null; then
     print_status "Mesa package: $(pacman -Q mesa 2>/dev/null)"
 fi
-if pacman -Q dxvk &> /dev/null; then
+if pacman -Q dxvk &>/dev/null; then
     print_status "DXVK verified: $(pacman -Q dxvk 2>/dev/null)"
 fi
 
 # Optionally install NVIDIA utilities if NVIDIA GPU is detected
-if lspci | grep -i nvidia &> /dev/null; then
+if lspci | grep -i nvidia &>/dev/null; then
     print_status "NVIDIA GPU detected, installing NVIDIA utilities..."
     sudo pacman -S --needed --noconfirm lib32-nvidia-utils nvidia-utils || print_warning "NVIDIA utilities installation failed, continuing..."
 else
@@ -236,7 +240,7 @@ else
 fi
 
 # Optionally install AMD Radeon Vulkan drivers if AMD GPU is detected
-if lspci | grep -i amd &> /dev/null || lspci | grep -i radeon &> /dev/null; then
+if lspci | grep -i amd &>/dev/null || lspci | grep -i radeon &>/dev/null; then
     print_status "AMD GPU detected, installing AMD Vulkan drivers..."
     sudo pacman -S --needed --noconfirm vulkan-radeon lib32-vulkan-radeon || print_warning "AMD Vulkan drivers installation failed, continuing..."
 else
@@ -249,7 +253,7 @@ sudo usermod -aG gamemode $USER
 
 # Create Wine prefix with staging
 print_status "Creating Wine Staging prefix..."
-WINEPREFIX=~/.wine-staging WINEARCH=win64 wineboot &> /dev/null || print_warning "Wine prefix creation encountered an issue, you may need to run it manually"
+WINEPREFIX=~/.wine-staging WINEARCH=win64 wineboot &>/dev/null || print_warning "Wine prefix creation encountered an issue, you may need to run it manually"
 
 # Enable GameMode for Steam
 print_status "Setting up Steam launch options helper..."
@@ -276,9 +280,7 @@ else
 fi
 
 echo ""
-echo "================================================"
-print_status "Installation complete!"
-echo "================================================"
+print_header "Installation complete!"
 echo ""
 echo "Installed packages:"
 echo "  - Wine Staging (instead of regular Wine)"

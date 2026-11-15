@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Gaming Mouse Configuration Setup Script
 # Installs ratbagd and Piper for gaming mouse configuration (Logitech and others)
@@ -6,33 +6,37 @@
 
 # Note: Script will continue even if individual packages fail to install
 
-echo "================================================"
-echo "Gaming Mouse Configuration Setup"
-echo "================================================"
-
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-print_status() {
-    echo -e "${GREEN}[*]${NC} $1"
+print_header() {
+    echo "================================================"
+    echo "$1"
+    echo "================================================"
 }
 
-print_error() {
-    echo -e "${RED}[!]${NC} $1"
+print_status() {
+    echo -e "${GREEN}[*]${NC} $1"
 }
 
 print_warning() {
     echo -e "${YELLOW}[!]${NC} $1"
 }
 
+print_error() {
+    echo -e "${RED}[!]${NC} $1" >&2
+}
+
 # Check if running as root
-if [ "$EUID" -eq 0 ]; then 
+if [ "$EUID" -eq 0 ]; then
     print_error "Please do not run this script as root"
     exit 1
 fi
+
+print_header "Gaming Mouse Configuration Setup"
 
 # Install ratbagd and Piper
 print_status "Installing ratbagd (daemon for gaming mice configuration)..."
@@ -47,9 +51,7 @@ sudo systemctl enable ratbagd || print_warning "Failed to enable ratbagd service
 sudo systemctl start ratbagd || print_warning "Failed to start ratbagd service, continuing..."
 
 echo ""
-echo "================================================"
-print_status "Installation complete!"
-echo "================================================"
+print_header "Installation complete!"
 echo ""
 echo "Installed packages:"
 echo "  - libratbag (ratbagd daemon)"
