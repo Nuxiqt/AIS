@@ -21,8 +21,7 @@ This repository contains an installation script that automatically sets up your 
 - **MangoHud** - Gaming overlay for monitoring FPS and system resources (with 32-bit support)
 - **Gamescope** - Gaming compositor from Valve
 - **GameMode** - System optimization for gaming (with 32-bit support)
-- **ProtonUp-Qt** - Easy Proton-GE version management
-- **ProtonPlus** - Alternative Proton version manager
+- **ProtonUp-Qt** and/or **ProtonPlus** - Proton-GE version managers of your choice (both by default, or skip)
 - **protontricks** - Winetricks wrapper for Proton games
 
 ### Windows Compatibility
@@ -72,7 +71,7 @@ chmod +x install-flatpak.sh
 4. Installs and configures yay (AUR helper)
 5. Asks whether to install Wine Staging (default) or stable Wine, removing the other if present
 6. Installs all gaming packages from official repos
-7. Installs additional packages from AUR (Vesktop, Waterfox/Brave, ProtonUp-Qt)
+7. Installs additional packages from AUR (Vesktop, Waterfox/Brave, ProtonUp-Qt/ProtonPlus)
 8. Configures GameMode user group
 9. Creates a Wine prefix (`~/.wine-staging` for Staging, `~/.wine` for stable Wine)
 10. Sets up helpful aliases and Steam launch options reference
@@ -83,7 +82,7 @@ After the script completes:
 
 1. **Log out and log back in** (required for GameMode group changes)
 2. Run `steam` to set up Steam for the first time
-3. Use ProtonUp-Qt to install Proton-GE for better game compatibility
+3. Use ProtonUp-Qt or ProtonPlus to install Proton-GE for better game compatibility
 4. Check `~/.local/share/Steam/steam_launch_options.txt` for Steam launch options examples
 
 ### Steam Launch Options

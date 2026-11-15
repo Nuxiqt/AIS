@@ -262,19 +262,56 @@ if [ ${#browsers_installed[@]} -eq 0 ]; then
     print_status "Skipping browser installation"
 fi
 
-# Install ProtonUp-Qt
-print_status "Installing ProtonUp-Qt..."
-yay -S --needed --noconfirm protonup-qt || print_warning "ProtonUp-Qt installation failed, continuing..."
-if command -v protonup-qt &>/dev/null; then
-    print_status "ProtonUp-Qt verified: $(pacman -Q protonup-qt 2>/dev/null || echo 'installed')"
-fi
+# Proton version manager selection
+install_protonup_qt() {
+    print_status "Installing ProtonUp-Qt..."
+    yay -S --needed --noconfirm protonup-qt || print_warning "ProtonUp-Qt installation failed, continuing..."
+    if command -v protonup-qt &>/dev/null; then
+        print_status "ProtonUp-Qt verified: $(pacman -Q protonup-qt 2>/dev/null || echo 'installed')"
+    fi
+}
 
-# Install ProtonPlus
-print_status "Installing ProtonPlus..."
-yay -S --needed --noconfirm protonplus || print_warning "ProtonPlus installation failed, continuing..."
-if pacman -Q protonplus &>/dev/null; then
-    print_status "ProtonPlus verified: $(pacman -Q protonplus 2>/dev/null)"
-fi
+install_protonplus() {
+    print_status "Installing ProtonPlus..."
+    yay -S --needed --noconfirm protonplus || print_warning "ProtonPlus installation failed, continuing..."
+    if pacman -Q protonplus &>/dev/null; then
+        print_status "ProtonPlus verified: $(pacman -Q protonplus 2>/dev/null)"
+    fi
+}
+
+echo ""
+echo "Choose Proton version manager (installs Proton-GE and other compatibility tools):"
+echo "  1) ProtonUp-Qt (Qt app, supports Steam, Lutris, Heroic and more)"
+echo "  2) ProtonPlus (GTK app, modern alternative)"
+echo "  3) Both [default]"
+echo "  4) Skip"
+read -p "Enter your choice (1-4) [3]: " proton_choice
+proton_choice=${proton_choice:-3}
+
+proton_managers=()
+case $proton_choice in
+    1)
+        install_protonup_qt
+        proton_managers=("ProtonUp-Qt")
+        ;;
+    2)
+        install_protonplus
+        proton_managers=("ProtonPlus")
+        ;;
+    3)
+        install_protonup_qt
+        install_protonplus
+        proton_managers=("ProtonUp-Qt" "ProtonPlus")
+        ;;
+    4)
+        print_status "Skipping Proton version manager installation"
+        ;;
+    *)
+        print_warning "Invalid choice, installing ProtonUp-Qt"
+        install_protonup_qt
+        proton_managers=("ProtonUp-Qt")
+        ;;
+esac
 
 # Install protontricks
 print_status "Installing protontricks..."
@@ -413,8 +450,9 @@ done
 echo "  - Lutris"
 echo "  - protontricks"
 echo "  - OBS Studio"
-echo "  - ProtonUp-Qt"
-echo "  - ProtonPlus"
+for manager in "${proton_managers[@]}"; do
+    echo "  - $manager"
+done
 echo "  - GameScope"
 echo "  - MangoHud"
 echo "  - GameMode"
@@ -425,7 +463,11 @@ echo ""
 echo "Next steps:"
 echo "  1. Log out and log back in"
 echo "  2. Run 'steam' to set up Steam"
-echo "  3. Use ProtonUp-Qt to install Proton-GE"
+if [ ${#proton_managers[@]} -gt 0 ]; then
+    echo "  3. Use ${proton_managers[0]} to install Proton-GE"
+else
+    echo "  3. Install Proton-GE manually or with a Proton version manager if needed"
+fi
 echo "  4. Check ~/.local/share/Steam/steam_launch_options.txt for launch options"
 echo ""
 echo "$WINE_NAME usage:"
