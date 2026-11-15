@@ -194,11 +194,72 @@ case $discord_choice in
         ;;
 esac
 
-# Install Waterfox
-print_status "Installing Waterfox..."
-yay -S --needed --noconfirm waterfox-bin || print_warning "Waterfox installation failed, continuing..."
-if command -v waterfox &>/dev/null; then
-    print_status "Waterfox verified: $(pacman -Q waterfox-bin 2>/dev/null || echo 'installed')"
+# Browser selection
+install_waterfox() {
+    print_status "Installing Waterfox..."
+    yay -S --needed --noconfirm waterfox-bin || print_warning "Waterfox installation failed, continuing..."
+    if command -v waterfox &>/dev/null; then
+        print_status "Waterfox verified: $(pacman -Q waterfox-bin 2>/dev/null || echo 'installed')"
+    fi
+}
+
+install_brave() {
+    print_status "Installing Brave..."
+    yay -S --needed --noconfirm brave-bin || print_warning "Brave installation failed, continuing..."
+    if command -v brave &>/dev/null; then
+        print_status "Brave verified: $(pacman -Q brave-bin 2>/dev/null || echo 'installed')"
+    fi
+}
+
+install_firefox() {
+    print_status "Installing Firefox..."
+    sudo pacman -S --needed --noconfirm firefox || print_warning "Firefox installation failed, continuing..."
+    if command -v firefox &>/dev/null; then
+        print_status "Firefox verified: $(pacman -Q firefox 2>/dev/null || echo 'installed')"
+    fi
+}
+
+echo ""
+echo "Choose web browser(s) - enter one or more numbers, e.g. '1 3':"
+echo "  1) Waterfox (privacy-focused Firefox fork) [default]"
+echo "  2) Brave (privacy-focused Chromium-based browser)"
+echo "  3) Firefox (official Arch package)"
+echo "  4) All"
+echo "  5) Skip"
+read -p "Enter your choice(s) [1]: " browser_choice
+browser_choice=${browser_choice:-1}
+
+# Normalize choices: allow commas, expand "All", drop duplicates
+browser_choice=${browser_choice//,/ }
+case " $browser_choice " in
+    *" 5 "*) browser_choice="" ;;
+    *" 4 "*) browser_choice="1 2 3" ;;
+esac
+
+browsers_installed=()
+for choice in $browser_choice; do
+    case $choice in
+        1) name="Waterfox" ;;
+        2) name="Brave" ;;
+        3) name="Firefox" ;;
+        *)
+            print_warning "Invalid browser choice '$choice', ignoring"
+            continue
+            ;;
+    esac
+    if [[ " ${browsers_installed[*]} " == *" $name "* ]]; then
+        continue
+    fi
+    case $choice in
+        1) install_waterfox ;;
+        2) install_brave ;;
+        3) install_firefox ;;
+    esac
+    browsers_installed+=("$name")
+done
+
+if [ ${#browsers_installed[@]} -eq 0 ]; then
+    print_status "Skipping browser installation"
 fi
 
 # Install ProtonUp-Qt
@@ -346,7 +407,9 @@ echo "Installed packages:"
 echo "  - $WINE_NAME"
 echo "  - Steam"
 echo "  - Discord client (based on your choice)"
-echo "  - Waterfox"
+for browser in "${browsers_installed[@]}"; do
+    echo "  - $browser"
+done
 echo "  - Lutris"
 echo "  - protontricks"
 echo "  - OBS Studio"

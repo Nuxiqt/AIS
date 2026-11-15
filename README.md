@@ -32,7 +32,7 @@ This repository contains an installation script that automatically sets up your 
 
 ### Additional Software
 - **OBS Studio** - Streaming and recording software (hardware H.264/HEVC/AV1 encoding via VA-API or NVENC)
-- **Waterfox** - Privacy-focused web browser
+- **Waterfox**, **Brave** and/or **Firefox** - web browsers of your choice (or skip)
 - **yay** - AUR helper for easy package management
 
 ### Graphics & Compatibility Libraries
@@ -72,7 +72,7 @@ chmod +x install-flatpak.sh
 4. Installs and configures yay (AUR helper)
 5. Asks whether to install Wine Staging (default) or stable Wine, removing the other if present
 6. Installs all gaming packages from official repos
-7. Installs additional packages from AUR (Vesktop, Waterfox, ProtonUp-Qt)
+7. Installs additional packages from AUR (Vesktop, Waterfox/Brave, ProtonUp-Qt)
 8. Configures GameMode user group
 9. Creates a Wine prefix (`~/.wine-staging` for Staging, `~/.wine` for stable Wine)
 10. Sets up helpful aliases and Steam launch options reference
@@ -131,8 +131,8 @@ Feel free to edit `install.sh` to add or remove packages according to your needs
 
 ## Installed Package List
 
-- **Official Repos**: Steam, Lutris, Wine Staging or Wine, Winetricks, GameMode, MangoHud, Gamescope, OBS Studio, protontricks, DXVK, Vulkan drivers, Mesa, VKD3D
-- **AUR**: yay, Vesktop, Waterfox, ProtonUp-Qt, ProtonPlus
+- **Official Repos**: Steam, Firefox (optional), Lutris, Wine Staging or Wine, Winetricks, GameMode, MangoHud, Gamescope, OBS Studio, protontricks, DXVK, Vulkan drivers, Mesa, VKD3D
+- **AUR**: yay, Vesktop, Waterfox, Brave, ProtonUp-Qt, ProtonPlus
 - **Mesa tools**: `mesa-utils`, `vulkan-tools`, `opencl-mesa`, `libva-utils`
 
 ## License
