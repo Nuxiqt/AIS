@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Gaming Compatibility Tweaks Script
-# Applies SteamOS-style sysctl/limits tweaks
+# Applies SteamOS-style kernel tweaks that are still relevant on current Arch
 # Based on arch wiki - https://wiki.archlinux.org/title/Gaming
 # and https://github.com/AdelKS/LinuxGamingGuide
 # Run with: sudo bash gaming-comp.sh
@@ -40,54 +40,74 @@ fi
 
 print_header "SteamOS-style Gaming Compatibility Tweaks"
 
-# vm.max_map_count
-print_status "Setting vm.max_map_count..."
-cat > /etc/sysctl.d/80-gamecompatibility.conf << 'EOF'
-vm.max_map_count = 2147483642
+# Remove tweaks from older versions of this script that are no longer needed:
+#  - 80-inotify.conf: Arch already sets sane inotify limits (10-arch.conf)
+#  - 80-shm.conf: kernel shm defaults are already near unlimited; old values lowered them
+#  - 99-gaming.conf: nofile limits were for esync, superseded by ntsync; systemd sets hard limit 524288
+for obsolete in \
+    /etc/sysctl.d/80-inotify.conf \
+    /etc/sysctl.d/80-shm.conf \
+    /etc/security/limits.d/99-gaming.conf; do
+    if [ -f "$obsolete" ]; then
+        print_status "Removing obsolete tweak: $obsolete"
+        rm -f "$obsolete"
+    fi
+done
+
+# Split-lock mitigation (SteamOS default; some Wine/Proton games slow down heavily with it on)
+print_status "Disabling kernel split-lock mitigation..."
+cat > /etc/sysctl.d/75-kernelsplitlock.conf << 'EOF'
+kernel.split_lock_mitigate = 0
 EOF
 
-# Inotify limits
-print_status "Setting inotify limits..."
-cat > /etc/sysctl.d/80-inotify.conf << 'EOF'
-fs.inotify.max_user_watches = 524288
-fs.inotify.max_user_instances = 8192
-EOF
-
-# Shared memory
-print_status "Setting shared memory limits..."
-cat > /etc/sysctl.d/80-shm.conf << 'EOF'
-kernel.shmmni = 8192
-kernel.shmmax = 68719476736
-kernel.shmall = 4294967296
-EOF
-
-# Swappiness
+# Swappiness (avoid swapping unless memory is actually full)
 print_status "Setting swappiness..."
 cat > /etc/sysctl.d/80-swappiness.conf << 'EOF'
 vm.swappiness = 10
-vm.vfs_cache_pressure = 50
 EOF
 
-# File descriptor limits
-print_status "Setting file descriptor limits..."
-cat > /etc/security/limits.d/99-gaming.conf << 'EOF'
-* soft nofile 1048576
-* hard nofile 1048576
-EOF
-
-# Transparent Huge Pages
-print_status "Configuring Transparent Huge Pages..."
+# Transparent Huge Pages (Arch kernel defaults to "always")
+print_status "Setting Transparent Huge Pages to madvise..."
 cat > /etc/tmpfiles.d/thp.conf << 'EOF'
 w /sys/kernel/mm/transparent_hugepage/enabled - - - - madvise
 w /sys/kernel/mm/transparent_hugepage/defrag - - - - madvise
 EOF
 
-# Apply sysctl immediately
+# vm.max_map_count (optional: Arch default 1048576 is sufficient for current games)
+echo ""
+echo "Arch already sets vm.max_map_count to 1048576, which is enough for current games."
+read -r -p "Raise it to the SteamOS value 2147483642 anyway? [y/N]: " map_choice
+case "$map_choice" in
+    y|Y)
+        print_status "Setting vm.max_map_count to SteamOS value..."
+        cat > /etc/sysctl.d/80-gamecompatibility.conf << 'EOF'
+vm.max_map_count = 2147483642
+EOF
+        ;;
+    *)
+        if [ -f /etc/sysctl.d/80-gamecompatibility.conf ]; then
+            print_status "Removing custom vm.max_map_count, using Arch default"
+            rm -f /etc/sysctl.d/80-gamecompatibility.conf
+        else
+            print_status "Keeping Arch default vm.max_map_count"
+        fi
+        ;;
+esac
+
+# Apply sysctl and tmpfiles immediately
 print_status "Applying sysctl settings..."
-sysctl --system
+sysctl --system &>/dev/null
+print_status "Applying Transparent Huge Pages settings..."
+systemd-tmpfiles --create /etc/tmpfiles.d/thp.conf
 
 echo ""
 print_header "Tweaks applied!"
 echo ""
-print_warning "IMPORTANT: Reboot recommended for full effect!"
+echo "Applied tweaks:"
+echo "  - kernel.split_lock_mitigate = 0"
+echo "  - vm.swappiness = 10"
+echo "  - Transparent Huge Pages: madvise"
+echo "  - vm.max_map_count: $(sysctl -n vm.max_map_count)"
+echo ""
+print_warning "IMPORTANT: Reboot to fully reset removed tweaks to their defaults!"
 echo ""

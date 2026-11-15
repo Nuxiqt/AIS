@@ -26,7 +26,7 @@ This repository contains an installation script that automatically sets up your 
 - **protontricks** - Winetricks wrapper for Proton games
 
 ### Windows Compatibility
-- **Wine Staging** - Latest Wine with experimental features (replaces regular Wine)
+- **Wine Staging** or **Wine** - your choice at install time (Staging is the default)
 - **Winetricks** - Wine configuration and dependency installer
 - **DXVK** - Vulkan-based DirectX 9/10/11 implementation
 
@@ -70,11 +70,11 @@ chmod +x install-flatpak.sh
 2. Updates your system with `pacman -Syu`
 3. Installs base-devel and git
 4. Installs and configures yay (AUR helper)
-5. Removes regular Wine and installs Wine Staging
+5. Asks whether to install Wine Staging (default) or stable Wine, removing the other if present
 6. Installs all gaming packages from official repos
 7. Installs additional packages from AUR (Vesktop, Waterfox, ProtonUp-Qt)
 8. Configures GameMode user group
-9. Creates a Wine Staging prefix at ~/.wine-staging
+9. Creates a Wine prefix (`~/.wine-staging` for Staging, `~/.wine` for stable Wine)
 10. Sets up helpful aliases and Steam launch options reference
 
 ### Post-Installation Steps
@@ -95,9 +95,11 @@ The script creates a helper file with examples. Common launch options:
 - Both: `gamemoderun mangohud %command%`
 - Gamescope: `gamescope -f -w 1920 -h 1080 -- %command%`
 
-### Wine Staging Usage
+### Wine Usage
 
-The script creates aliases for easy Wine Staging usage:
+If you chose stable Wine, use `wine` as usual (default prefix `~/.wine`).
+
+If you chose Wine Staging, the script creates aliases for it:
 
 ```bash
 wine-staging <program.exe>         # Run with Wine Staging
@@ -129,7 +131,7 @@ Feel free to edit `install.sh` to add or remove packages according to your needs
 
 ## Installed Package List
 
-- **Official Repos**: Steam, Lutris, Wine Staging, Winetricks, GameMode, MangoHud, Gamescope, OBS Studio, protontricks, DXVK, Vulkan drivers, Mesa, VKD3D
+- **Official Repos**: Steam, Lutris, Wine Staging or Wine, Winetricks, GameMode, MangoHud, Gamescope, OBS Studio, protontricks, DXVK, Vulkan drivers, Mesa, VKD3D
 - **AUR**: yay, Vesktop, Waterfox, ProtonUp-Qt, ProtonPlus
 - **Mesa tools**: `mesa-utils`, `vulkan-tools`, `opencl-mesa`
 
