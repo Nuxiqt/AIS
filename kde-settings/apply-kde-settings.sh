@@ -2,7 +2,8 @@
 
 # KDE Plasma Settings Script
 # Applies my personal KDE setup on a (new) Plasma install: custom keyboard
-# shortcuts, keyboard layouts, and disables the volume change audio feedback
+# shortcuts, keyboard layouts, application launcher icon (Arch logo), and disables
+# the volume change audio feedback
 # These are personal preferences - export your own with: apply-kde-settings.sh export
 # Settings are stored in settings.conf next to this script
 # Run with: bash apply-kde-settings.sh [apply|export]
@@ -13,7 +14,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SETTINGS_FILE="$SCRIPT_DIR/settings.conf"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 BACKUP_DIR="$HOME/.local/share/ais-backups/kde-$(date +%Y%m%d-%H%M%S)"
-CONFIG_FILES=(kglobalshortcutsrc kxkbrc plasmaparc)
+CONFIG_FILES=(kglobalshortcutsrc kxkbrc plasmaparc plasma-org.kde.plasma.desktop-appletsrc)
+APPLETS_FILE="plasma-org.kde.plasma.desktop-appletsrc"
+# Application launcher widgets whose icon is set
+LAUNCHER_PLUGINS=(org.kde.plasma.kickoff org.kde.plasma.kicker org.kde.plasma.kickerdash)
+DEFAULT_LAUNCHER_ICON="/usr/share/pixmaps/archlinux-logo.svg"
 
 # Colors for output
 RED='\033[0;31m'
@@ -56,6 +61,47 @@ unescape_kconfig() {
     printf '%s' "$value"
 }
 
+# Set the icon of every application launcher widget through the running plasmashell
+# (launcher config is stored under per-install widget IDs, so kwriteconfig6 can't target it)
+apply_launcher_icon() {
+    local icon="$1"
+    if [ ! -f "$icon" ]; then
+        print_warning "Launcher icon not found: $icon, skipping"
+        return
+    fi
+    if ! command -v qdbus6 &>/dev/null || ! qdbus6 org.kde.plasmashell /PlasmaShell &>/dev/null; then
+        print_warning "Plasma is not running, skipping launcher icon (re-run apply after logging in)"
+        return
+    fi
+
+    local plugins
+    plugins=$(printf '"%s",' "${LAUNCHER_PLUGINS[@]}")
+    local script="
+        var plugins = [${plugins%,}];
+        var count = 0;
+        panels().forEach(function (panel) {
+            panel.widgets().forEach(function (widget) {
+                if (plugins.indexOf(widget.type) >= 0) {
+                    widget.currentConfigGroup = ['General'];
+                    widget.writeConfig('icon', '${icon}');
+                    widget.reloadConfig();
+                    count++;
+                }
+            });
+        });
+        print(count);
+    "
+    local result
+    result=$(qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "$script" 2>&1 || true)
+    if [[ "$result" =~ ^[0-9]+$ ]] && [ "$result" -gt 0 ]; then
+        print_status "Application launcher icon set to $icon ($result launcher(s))"
+    elif [ "$result" = "0" ]; then
+        print_warning "No application launcher found in any panel, skipping icon"
+    else
+        print_warning "Failed to set launcher icon: $result"
+    fi
+}
+
 check_root() {
     if [ "$EUID" -eq 0 ]; then
         print_error "Please do not run this script as root"
@@ -87,6 +133,20 @@ export_settings() {
         echo ""
         echo "# Disable volume change audio feedback"
         echo "plasmaparc|General|AudioFeedback|false"
+        echo ""
+        echo "# Application launcher icon (applied through plasmashell, not a config file)"
+        local launcher_icon
+        launcher_icon=$(awk -v plugins="${LAUNCHER_PLUGINS[*]}" '
+            BEGIN { n = split(plugins, p, " "); for (i = 1; i <= n; i++) want[p[i]] = 1 }
+            /^\[/ { group = $0; next }
+            /^plugin=/ && (substr($0, 8) in want) { launcher[group] = 1; next }
+            /^icon=/ {
+                base = group
+                sub(/\[Configuration\]\[General\]$/, "", base)
+                if (base != group && (base in launcher)) { print substr($0, 6); exit }
+            }
+        ' "$CONFIG_DIR/$APPLETS_FILE" 2>/dev/null || true)
+        echo "@launcher|General|icon|${launcher_icon:-$DEFAULT_LAUNCHER_ICON}"
         echo ""
         echo "# Keyboard layouts"
         awk '
@@ -153,9 +213,13 @@ apply_settings() {
         fi
     done
 
-    local file group key value count=0
+    local file group key value count=0 launcher_icon=""
     while IFS='|' read -r file group key value; do
         [[ -z "$file" || "$file" == \#* ]] && continue
+        if [ "$file" = "@launcher" ]; then
+            launcher_icon="$value"
+            continue
+        fi
         kwriteconfig6 --file "$file" --group "$group" --key "$key" -- "$(unescape_kconfig "$value")"
         count=$((count + 1))
     done < "$SETTINGS_FILE"
@@ -165,6 +229,10 @@ apply_settings() {
     if [ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
         dbus-send --session --type=signal /Layouts org.kde.keyboard.reloadConfig 2>/dev/null || true
         print_status "Keyboard layouts reloaded"
+    fi
+
+    if [ -n "$launcher_icon" ]; then
+        apply_launcher_icon "$launcher_icon"
     fi
 
     echo ""
@@ -179,7 +247,7 @@ apply_settings() {
 
 show_usage() {
     cat << EOF
-Personal KDE Plasma settings (custom shortcuts, keyboard layouts, audio feedback)
+Personal KDE Plasma settings (custom shortcuts, keyboard layouts, launcher icon, audio feedback)
 
 Usage: $0 [command]
 

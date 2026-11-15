@@ -7,7 +7,7 @@ A collection of scripts to automate package installation on fresh Arch Linux ins
 - **install.sh** - Main gaming environment setup script
 - **install-flatpak.sh** - Flatpak and Discover store manager setup
 - **install-gaming-mouse.sh** - Gaming mouse configuration (ratbagd & Piper)
-- **kde-settings/apply-kde-settings.sh** - Restore my personal KDE setup: custom keybinds, keyboard layouts and disabled volume audio feedback
+- **kde-settings/apply-kde-settings.sh** - Restore my personal KDE setup: custom keybinds, keyboard layouts, Arch logo on the application launcher and disabled volume audio feedback
 
 ## Features
 
@@ -64,13 +64,14 @@ chmod +x install-flatpak.sh
 ./install-flatpak.sh
 ```
 
-### KDE Settings (personal keybinds, keyboard layouts, audio feedback)
+### KDE Settings (personal keybinds, keyboard layouts, launcher icon, audio feedback)
 
 > **Note:** `kde-settings/settings.conf` contains my **personal/custom keybinds** and preferences,
 > not KDE defaults. Review it before applying, or run `export` on your own machine to replace it with yours.
 
 Saved settings live in `kde-settings/settings.conf`. On a new Plasma install, apply them
-(current config is backed up to `~/.local/share/ais-backups/` first), then log out and back in:
+(current config is backed up to `~/.local/share/ais-backups/` first), then log out and back in. The launcher icon is set through the running Plasma session, so run
+`apply` from inside Plasma (if run before the first login, re-run it after logging in):
 
 ```bash
 bash kde-settings/apply-kde-settings.sh apply
