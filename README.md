@@ -7,6 +7,8 @@ A collection of scripts to automate package installation on fresh Arch Linux ins
 - **install.sh** - Main gaming environment setup script
 - **install-flatpak.sh** - Flatpak and Discover store manager setup
 - **install-gaming-mouse.sh** - Gaming mouse configuration (ratbagd & Piper)
+- **developer-install/install-dev.sh** - Developer tools: VS Code, Go, Python, Rust
+- **gpu-control/install-gpu-control.sh** - LACT GPU control (fan curves, power, clocks), AMD tools and overclocking unlock
 - **kde-settings/apply-kde-settings.sh** - Restore my personal KDE setup: custom keybinds, keyboard layouts, Arch logo on the application launcher and disabled volume audio feedback
 
 ## Features
@@ -82,6 +84,38 @@ After changing shortcuts or layouts, refresh the saved settings from your curren
 ```bash
 bash kde-settings/apply-kde-settings.sh export
 ```
+
+### Developer Tools (VS Code, Go, Python, Rust)
+
+```bash
+bash developer-install/install-dev.sh
+```
+
+Pick any combination (default: all). Every install is confirmed first:
+
+- **VS Code** - Microsoft build (AUR, default), Code - OSS (official repo) or VSCodium (AUR)
+- **Go** - `go`, `gopls` language server, `delve` debugger
+- **Python** - `python-pip` (for virtualenvs), `python-pipx`, `uv`
+- **Rust** - `rustup` with the stable toolchain and `rust-analyzer` (offers to replace the `rust` package, which conflicts)
+
+Optionally adds `~/go/bin`, `~/.local/bin` and `~/.cargo/bin` to PATH in your shell config
+(`~/.zshrc` or `~/.bashrc`), backing it up to `~/.local/share/ais-backups/` first.
+
+### GPU Control (LACT, AMD overclocking)
+
+```bash
+bash gpu-control/install-gpu-control.sh            # install
+bash gpu-control/install-gpu-control.sh --revert   # disable lactd, remove overclocking unlock
+```
+
+- **LACT** - GUI for fan curves, power limits, clocks and undervolting (AMD, NVIDIA, Intel);
+  enables the `lactd` service, which applies your settings at boot
+- **AMD only:** `amdgpu_top` monitor, and optional overclocking unlock
+  (`options amdgpu ppfeaturemask=0xffffffff` in `/etc/modprobe.d/99-amdgpu-overdrive.conf`,
+  then rebuilds the initramfs; reboot required). Skipped if overdrive is already enabled,
+  e.g. via the kernel command line
+
+Every change is confirmed first. Overclocking and undervolting are at your own risk.
 
 ### What the Script Does
 
