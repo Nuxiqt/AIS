@@ -237,7 +237,8 @@ sudo pacman -S --needed --noconfirm \
     dxvk \
     lib32-opencl-icd-loader \
     opencl-icd-loader \
-    opencl-mesa || print_warning "Some gaming libraries failed to install, continuing..."
+    opencl-mesa \
+    libva-utils || print_warning "Some gaming libraries failed to install, continuing..."
 
 # Verify graphics libraries
 if command -v vulkaninfo &>/dev/null; then
@@ -254,8 +255,12 @@ if pacman -Q dxvk &>/dev/null; then
     print_status "DXVK verified: $(pacman -Q dxvk 2>/dev/null)"
 fi
 
+# Only look at display controllers, so AMD/Intel chipsets and CPUs don't count as GPUs
+gpu_list=$(lspci | grep -iE 'vga|3d|display' || true)
+
 # Optionally install NVIDIA utilities if NVIDIA GPU is detected
-if lspci | grep -i nvidia &>/dev/null; then
+# (OBS hardware encoding on NVIDIA uses NVENC from nvidia-utils)
+if echo "$gpu_list" | grep -qi nvidia; then
     print_status "NVIDIA GPU detected, installing NVIDIA utilities..."
     sudo pacman -S --needed --noconfirm lib32-nvidia-utils nvidia-utils || print_warning "NVIDIA utilities installation failed, continuing..."
 else
@@ -263,11 +268,40 @@ else
 fi
 
 # Optionally install AMD Radeon Vulkan drivers if AMD GPU is detected
-if lspci | grep -i amd &>/dev/null || lspci | grep -i radeon &>/dev/null; then
+# (VA-API hardware encoding for OBS is already provided by mesa)
+if echo "$gpu_list" | grep -qiE 'amd|radeon'; then
     print_status "AMD GPU detected, installing AMD Vulkan drivers..."
     sudo pacman -S --needed --noconfirm vulkan-radeon lib32-vulkan-radeon || print_warning "AMD Vulkan drivers installation failed, continuing..."
 else
     print_status "No AMD GPU detected, skipping AMD-specific Vulkan drivers"
+fi
+
+# Optionally install Intel Vulkan and VA-API drivers if Intel GPU is detected
+# (intel-media-driver provides VA-API hardware encoding for OBS on recent Intel GPUs)
+if echo "$gpu_list" | grep -qi intel; then
+    print_status "Intel GPU detected, installing Intel Vulkan and VA-API drivers..."
+    sudo pacman -S --needed --noconfirm vulkan-intel lib32-vulkan-intel intel-media-driver || print_warning "Intel drivers installation failed, continuing..."
+else
+    print_status "No Intel GPU detected, skipping Intel drivers"
+fi
+
+# Check hardware video encoding for OBS (VA-API: AMD and Intel)
+if command -v vainfo &>/dev/null; then
+    vainfo_output=$(vainfo 2>/dev/null || true)
+    if echo "$vainfo_output" | grep -q "VAEntrypointEncSlice"; then
+        encoders=""
+        echo "$vainfo_output" | grep -q "VAProfileH264.*VAEntrypointEncSlice" && encoders="$encoders H.264"
+        echo "$vainfo_output" | grep -q "VAProfileHEVC.*VAEntrypointEncSlice" && encoders="$encoders HEVC"
+        echo "$vainfo_output" | grep -q "VAProfileAV1.*VAEntrypointEncSlice" && encoders="$encoders AV1"
+        print_status "VA-API hardware encoding available:$encoders"
+        if ! echo "$vainfo_output" | grep -q "VAProfileAV1.*VAEntrypointEncSlice"; then
+            print_warning "No AV1 hardware encoding (needs AMD RX 7000+, Intel Arc/Core Ultra or NVIDIA RTX 40+ with NVENC)"
+        fi
+    elif echo "$gpu_list" | grep -qi nvidia; then
+        print_status "NVIDIA GPU: use NVENC encoders in OBS (AV1 needs RTX 40 series or newer)"
+    else
+        print_warning "No VA-API hardware encoding found, OBS will use software encoding"
+    fi
 fi
 
 # Configure gamemode

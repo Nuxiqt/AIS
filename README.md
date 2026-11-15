@@ -31,12 +31,12 @@ This repository contains an installation script that automatically sets up your 
 - **DXVK** - Vulkan-based DirectX 9/10/11 implementation
 
 ### Additional Software
-- **OBS Studio** - Streaming and recording software
+- **OBS Studio** - Streaming and recording software (hardware H.264/HEVC/AV1 encoding via VA-API or NVENC)
 - **Waterfox** - Privacy-focused web browser
 - **yay** - AUR helper for easy package management
 
 ### Graphics & Compatibility Libraries
-- Vulkan drivers and tools (Mesa, NVIDIA, `vulkan-tools`)
+- Vulkan and VA-API drivers and tools (Mesa, NVIDIA, Intel, `vulkan-tools`, `libva-utils`)
 - VKD3D (DirectX 12 to Vulkan)
 - OpenCL support
 - Mesa tooling (`mesa-utils`) and OpenCL implementation (`opencl-mesa`)
@@ -133,7 +133,7 @@ Feel free to edit `install.sh` to add or remove packages according to your needs
 
 - **Official Repos**: Steam, Lutris, Wine Staging or Wine, Winetricks, GameMode, MangoHud, Gamescope, OBS Studio, protontricks, DXVK, Vulkan drivers, Mesa, VKD3D
 - **AUR**: yay, Vesktop, Waterfox, ProtonUp-Qt, ProtonPlus
-- **Mesa tools**: `mesa-utils`, `vulkan-tools`, `opencl-mesa`
+- **Mesa tools**: `mesa-utils`, `vulkan-tools`, `opencl-mesa`, `libva-utils`
 
 ## License
 
