@@ -7,6 +7,7 @@ A collection of scripts to automate package installation on fresh Arch Linux ins
 - **install.sh** - Main gaming environment setup script
 - **install-flatpak.sh** - Flatpak and Discover store manager setup
 - **install-gaming-mouse.sh** - Gaming mouse configuration (ratbagd & Piper)
+- **kde-settings/apply-kde-settings.sh** - Restore my personal KDE setup: custom keybinds, keyboard layouts and disabled volume audio feedback
 
 ## Features
 
@@ -61,6 +62,24 @@ To install Flatpak with Discover store manager:
 ```bash
 chmod +x install-flatpak.sh
 ./install-flatpak.sh
+```
+
+### KDE Settings (personal keybinds, keyboard layouts, audio feedback)
+
+> **Note:** `kde-settings/settings.conf` contains my **personal/custom keybinds** and preferences,
+> not KDE defaults. Review it before applying, or run `export` on your own machine to replace it with yours.
+
+Saved settings live in `kde-settings/settings.conf`. On a new Plasma install, apply them
+(current config is backed up to `~/.local/share/ais-backups/` first), then log out and back in:
+
+```bash
+bash kde-settings/apply-kde-settings.sh apply
+```
+
+After changing shortcuts or layouts, refresh the saved settings from your current machine:
+
+```bash
+bash kde-settings/apply-kde-settings.sh export
 ```
 
 ### What the Script Does
