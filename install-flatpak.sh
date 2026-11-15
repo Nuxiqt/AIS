@@ -37,33 +37,23 @@ fi
 
 print_header "Flatpak and Discover Installation"
 
-# Install Flatpak
-print_status "Installing Flatpak..."
-sudo pacman -S --needed --noconfirm flatpak
+# Install Flatpak, Discover and the Flatpak permissions page for System Settings
+# (Discover gets Flatpak support from the flatpak package alone; packagekit-qt6 is
+# deliberately not installed, Arch marks it "not recommended" for pacman packages)
+print_status "Installing Flatpak, Discover and Flatpak settings module..."
+sudo pacman -S --needed --noconfirm flatpak discover flatpak-kcm
 
-# Install Flatpak backend for Discover (Discover usually comes with KDE)
-print_status "Installing Flatpak backend for Discover..."
-sudo pacman -S --needed --noconfirm packagekit-qt6
-
-# Install Discover if not already present (usually comes with KDE Plasma)
-if ! command -v plasma-discover &>/dev/null; then
-    print_status "Installing Discover store manager..."
-    sudo pacman -S --needed --noconfirm discover
-else
-    print_status "Discover already installed"
-fi
-
-# Add Flathub repository
-print_status "Adding Flathub repository..."
-flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+# Arch's flatpak package already ships the Flathub remote; this is a safety net
+print_status "Ensuring Flathub repository is configured..."
+sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 
 echo ""
 print_header "Installation complete!"
 echo ""
 echo "Installed packages:"
 echo "  - Flatpak"
-echo "  - PackageKit Qt6 backend (Flatpak support for Discover)"
-echo "  - Discover (if not already installed with KDE)"
+echo "  - Discover (with Flatpak support)"
+echo "  - Flatpak permissions page in System Settings (flatpak-kcm)"
 echo "  - Flathub repository"
 echo ""
 print_warning "IMPORTANT: You may need to log out and log back in for Flatpak apps to appear in your application menu!"
