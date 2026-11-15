@@ -10,7 +10,7 @@ A collection of scripts to automate package installation on fresh Arch Linux ins
 - **gaming-mouse/install-gaming-mouse.sh** - Gaming mouse configuration: Piper (libratbag), plus rivalcfg for SteelSeries and Solaar for Logitech when detected
 - **developer-install/install-dev.sh** - Developer tools: VS Code, Go, Python, Rust
 - **gpu-control/install-gpu-control.sh** - LACT GPU control (fan curves, power, clocks), AMD tools and overclocking unlock
-- **kde-settings/apply-kde-settings.sh** - Restore my personal KDE setup: custom keybinds, keyboard layouts, Arch logo on the application launcher and disabled volume audio feedback
+- **kde-settings/apply-kde-settings.sh** - Restore my personal KDE setup: custom keybinds, keyboard layouts, Arch logo on the application launcher, disabled volume audio feedback, and Konsole/Yakuake and VS Code shortcuts
 
 ## Features
 
@@ -44,6 +44,91 @@ This repository contains an installation script that automatically sets up your 
 - OpenCL support
 - Mesa tooling (`mesa-utils`) and OpenCL implementation (`opencl-mesa`)
 - Additional Wine dependencies and 32-bit libraries
+
+## Installing Arch Linux with archinstall
+
+AIS runs on an installed Arch system. The quickest way to get one is `archinstall`, the official
+guided installer that ships on the Arch ISO. It is a text menu (arrow keys + Enter), not a GUI.
+
+### 1. Make the USB stick
+
+Download the ISO and its checksum from [archlinux.org/download](https://archlinux.org/download/), then verify it:
+
+```bash
+sha256sum archlinux-x86_64.iso   # must match the line for archlinux-x86_64.iso in sha256sums.txt
+```
+
+Find the USB stick (check SIZE, TRAN=usb and MODEL, everything on it will be erased):
+
+```bash
+lsblk -o NAME,SIZE,TRAN,MODEL,LABEL
+```
+
+Write the ISO to the whole device (e.g. `/dev/sdX`, not a partition like `/dev/sdX1`):
+
+```bash
+sudo umount /dev/sdX?* 2>/dev/null
+sudo dd if=archlinux-x86_64.iso of=/dev/sdX bs=4M oflag=direct conv=fsync status=progress
+```
+
+### 2. Boot the USB
+
+- Boot from the stick (boot menu key is usually F12, F11, F8 or Del) and pick *Arch Linux install medium*
+- If it doesn't boot, disable Secure Boot in the BIOS
+- Ethernet works automatically. For Wi-Fi:
+
+```bash
+iwctl
+station list                        # find your device, e.g. wlan0
+station wlan0 connect "Your SSID"   # asks for the password
+exit
+ping -c 3 archlinux.org
+```
+
+### 3. Run archinstall
+
+```bash
+archinstall
+```
+
+Go through the menu entries (names as in archinstall 4.5) and pick:
+
+| Menu entry | Recommended choice |
+| --- | --- |
+| Locales | Keyboard layout, language (e.g. `en_US.UTF-8`) |
+| Mirrors and repositories | Your region as mirror region, and enable the **multilib** repository (needed for Steam/Wine) |
+| Disk configuration | *Use a best-effort default partition layout*, pick the target disk (**double-check it**), filesystem `ext4` (or `btrfs` if you want snapshots) |
+| Swap | Enabled (zram) |
+| Bootloader | `systemd-boot` (UEFI) or `grub` (legacy BIOS) |
+| Kernels | `linux` (add `linux-lts` as a fallback if you like) |
+| Hostname | Name of your choice |
+| Authentication | Set a root password and add your user as **superuser** (sudo) |
+| Profile | *Desktop* → *KDE Plasma*, graphics driver for your GPU (*AMD / ATI (open-source)*, *Intel (open-source)* or *Nvidia (open kernel module…)* for RTX 20 series and newer), greeter as suggested |
+| Applications | Audio: `pipewire`, Bluetooth: enable if you have it |
+| Network configuration | *Use NetworkManager* |
+| Additional packages | `git` (to clone AIS) |
+| Timezone | Your timezone |
+
+Then choose **Install**, wait for it to finish, and reboot (remove the USB stick).
+
+> Tip: *Save configuration* writes your choices to a JSON file, which you can reuse on the next
+> install with `archinstall --config user_configuration.json`.
+
+### 4. Run AIS
+
+Log in to Plasma, open Konsole and run the scripts you need:
+
+```bash
+git clone https://github.com/Nuxiqt/AIS.git
+cd AIS
+bash install.sh                                  # gaming setup (also installs yay and the 32-bit GPU drivers Steam needs)
+bash install-flatpak.sh                          # optional: Flatpak + Discover
+bash developer-install/install-dev.sh            # optional: VS Code, Go, Python, Rust
+bash kde-settings/apply-kde-settings.sh apply    # optional: my KDE, Konsole and VS Code shortcuts (run after install-dev.sh)
+```
+
+Log out and back in afterwards. The other scripts (GPU control, Sunshine, gaming mouse, Steam Remote Play,
+`gaming-comp.sh`) can be run any time later.
 
 ## Usage
 
@@ -79,6 +164,12 @@ Saved settings live in `kde-settings/settings.conf`. On a new Plasma install, ap
 ```bash
 bash kde-settings/apply-kde-settings.sh apply
 ```
+
+It also restores app shortcuts:
+
+- **Konsole** (and Yakuake, which uses Konsole) - custom shortcuts such as copy/paste, saved as `@kxmlgui` lines in `settings.conf`
+- **VS Code** - `kde-settings/vscode-keybindings.json`, copied to every installed build (VS Code, Code - OSS, VSCodium).
+  If VS Code isn't installed yet, run `developer-install/install-dev.sh` first and re-run `apply`
 
 After changing shortcuts or layouts, refresh the saved settings from your current machine:
 
@@ -125,11 +216,12 @@ Every change is confirmed first. Overclocking and undervolting are at your own r
 3. Installs base-devel and git
 4. Installs and configures yay (AUR helper)
 5. Asks whether to install Wine Staging (default) or stable Wine, removing the other if present
-6. Installs all gaming packages from official repos
-7. Installs additional packages from AUR (Vesktop, Waterfox/Brave, ProtonUp-Qt/ProtonPlus)
-8. Configures GameMode user group
-9. Creates a Wine prefix (`~/.wine-staging` for Staging, `~/.wine` for stable Wine)
-10. Sets up helpful aliases and Steam launch options reference
+6. Detects your GPU and installs its Vulkan drivers, including the 32-bit ones (before Steam, so pacman doesn't pick another GPU's driver)
+7. Installs all gaming packages from official repos
+8. Installs additional packages from AUR (Vesktop, Waterfox/Brave, ProtonUp-Qt/ProtonPlus)
+9. Configures GameMode user group
+10. Creates a Wine prefix (`~/.wine-staging` for Staging, `~/.wine` for stable Wine)
+11. Sets up helpful aliases and Steam launch options reference
 
 ### Post-Installation Steps
 

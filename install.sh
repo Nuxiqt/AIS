@@ -119,6 +119,38 @@ else
     print_warning "$WINE_NAME package not found after installation"
 fi
 
+# GPU drivers go first: steam depends on (lib32-)vulkan-driver, and with --noconfirm
+# pacman would otherwise pick the first provider (lib32-nvidia-utils) on AMD/Intel
+# Only look at display controllers, so AMD/Intel chipsets and CPUs don't count as GPUs
+gpu_list=$(lspci | grep -iE 'vga|3d|display' || true)
+
+# Optionally install NVIDIA utilities if NVIDIA GPU is detected
+# (OBS hardware encoding on NVIDIA uses NVENC from nvidia-utils)
+if echo "$gpu_list" | grep -qi nvidia; then
+    print_status "NVIDIA GPU detected, installing NVIDIA utilities..."
+    sudo pacman -S --needed --noconfirm lib32-nvidia-utils nvidia-utils || print_warning "NVIDIA utilities installation failed, continuing..."
+else
+    print_status "No NVIDIA GPU detected, skipping NVIDIA utilities"
+fi
+
+# Optionally install AMD Radeon Vulkan drivers if AMD GPU is detected
+# (VA-API hardware encoding for OBS is already provided by mesa)
+if echo "$gpu_list" | grep -qiE 'amd|radeon'; then
+    print_status "AMD GPU detected, installing AMD Vulkan drivers..."
+    sudo pacman -S --needed --noconfirm vulkan-radeon lib32-vulkan-radeon || print_warning "AMD Vulkan drivers installation failed, continuing..."
+else
+    print_status "No AMD GPU detected, skipping AMD-specific Vulkan drivers"
+fi
+
+# Optionally install Intel Vulkan and VA-API drivers if Intel GPU is detected
+# (intel-media-driver provides VA-API hardware encoding for OBS on recent Intel GPUs)
+if echo "$gpu_list" | grep -qi intel; then
+    print_status "Intel GPU detected, installing Intel Vulkan and VA-API drivers..."
+    sudo pacman -S --needed --noconfirm vulkan-intel lib32-vulkan-intel intel-media-driver || print_warning "Intel drivers installation failed, continuing..."
+else
+    print_status "No Intel GPU detected, skipping Intel drivers"
+fi
+
 # Install gaming packages from official repos
 print_status "Installing gaming packages from official repositories..."
 sudo pacman -S --needed --noconfirm \
@@ -351,36 +383,6 @@ if pacman -Q mesa &>/dev/null; then
 fi
 if pacman -Q dxvk &>/dev/null; then
     print_status "DXVK verified: $(pacman -Q dxvk 2>/dev/null)"
-fi
-
-# Only look at display controllers, so AMD/Intel chipsets and CPUs don't count as GPUs
-gpu_list=$(lspci | grep -iE 'vga|3d|display' || true)
-
-# Optionally install NVIDIA utilities if NVIDIA GPU is detected
-# (OBS hardware encoding on NVIDIA uses NVENC from nvidia-utils)
-if echo "$gpu_list" | grep -qi nvidia; then
-    print_status "NVIDIA GPU detected, installing NVIDIA utilities..."
-    sudo pacman -S --needed --noconfirm lib32-nvidia-utils nvidia-utils || print_warning "NVIDIA utilities installation failed, continuing..."
-else
-    print_status "No NVIDIA GPU detected, skipping NVIDIA utilities"
-fi
-
-# Optionally install AMD Radeon Vulkan drivers if AMD GPU is detected
-# (VA-API hardware encoding for OBS is already provided by mesa)
-if echo "$gpu_list" | grep -qiE 'amd|radeon'; then
-    print_status "AMD GPU detected, installing AMD Vulkan drivers..."
-    sudo pacman -S --needed --noconfirm vulkan-radeon lib32-vulkan-radeon || print_warning "AMD Vulkan drivers installation failed, continuing..."
-else
-    print_status "No AMD GPU detected, skipping AMD-specific Vulkan drivers"
-fi
-
-# Optionally install Intel Vulkan and VA-API drivers if Intel GPU is detected
-# (intel-media-driver provides VA-API hardware encoding for OBS on recent Intel GPUs)
-if echo "$gpu_list" | grep -qi intel; then
-    print_status "Intel GPU detected, installing Intel Vulkan and VA-API drivers..."
-    sudo pacman -S --needed --noconfirm vulkan-intel lib32-vulkan-intel intel-media-driver || print_warning "Intel drivers installation failed, continuing..."
-else
-    print_status "No Intel GPU detected, skipping Intel drivers"
 fi
 
 # Check hardware video encoding for OBS (VA-API: AMD and Intel)

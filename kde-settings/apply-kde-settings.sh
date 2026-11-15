@@ -3,9 +3,11 @@
 # KDE Plasma Settings Script
 # Applies my personal KDE setup on a (new) Plasma install: custom keyboard
 # shortcuts, keyboard layouts, application launcher icon (Arch logo), and disables
-# the volume change audio feedback
+# the volume change audio feedback. Also restores app shortcuts: Konsole (and
+# Yakuake, which embeds Konsole) and VS Code keybindings
 # These are personal preferences - export your own with: apply-kde-settings.sh export
-# Settings are stored in settings.conf next to this script
+# Settings are stored in settings.conf next to this script (VS Code keybindings
+# in vscode-keybindings.json)
 # Run with: bash apply-kde-settings.sh [apply|export]
 
 set -euo pipefail
@@ -13,8 +15,14 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SETTINGS_FILE="$SCRIPT_DIR/settings.conf"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}"
 BACKUP_DIR="$HOME/.local/share/ais-backups/kde-$(date +%Y%m%d-%H%M%S)"
 CONFIG_FILES=(kglobalshortcutsrc kxkbrc plasmaparc plasma-org.kde.plasma.desktop-appletsrc)
+# KXMLGUI files (in $DATA_DIR/kxmlgui5) whose custom action shortcuts are saved
+KXMLGUI_FILES=(konsole/sessionui.rc konsole/konsoleui.rc)
+# VS Code builds (config dir name under $CONFIG_DIR) and their Arch packages
+VSCODE_VARIANTS=("Code" "Code - OSS" "VSCodium")
+VSCODE_KEYBINDINGS_NAME="vscode-keybindings.json"
 APPLETS_FILE="plasma-org.kde.plasma.desktop-appletsrc"
 # Application launcher widgets whose icon is set
 LAUNCHER_PLUGINS=(org.kde.plasma.kickoff org.kde.plasma.kicker org.kde.plasma.kickerdash)
@@ -102,6 +110,110 @@ apply_launcher_icon() {
     fi
 }
 
+# Copy a file into BACKUP_DIR under the given relative path
+backup_file() {
+    local src="$1" rel="$2"
+    [ -f "$src" ] || return 0
+    mkdir -p "$BACKUP_DIR/$(dirname "$rel")"
+    cp -a "$src" "$BACKUP_DIR/$rel"
+    print_status "Backed up $src"
+}
+
+# Print "action|shortcut" for every custom shortcut in a KXMLGUI file
+read_kxmlgui_shortcuts() {
+    awk '
+        /<ActionProperties[ >]/ { in_props = 1 }
+        /<\/ActionProperties>/ { in_props = 0 }
+        in_props && /<Action / && / shortcut="/ {
+            name = $0; sub(/.*name="/, "", name); sub(/".*/, "", name)
+            sc = $0; sub(/.*shortcut="/, "", sc); sub(/".*/, "", sc)
+            print name "|" sc
+        }
+    ' "$1"
+}
+
+# Set one action shortcut in a KXMLGUI file (e.g. konsole/sessionui.rc)
+# Without a local file, write a minimal one with version 1: the app merges its
+# shortcuts into its newer built-in UI file on next start
+apply_kxmlgui_shortcut() {
+    local rel="$1" action="$2" shortcut="$3"
+    local path="$DATA_DIR/kxmlgui5/$rel"
+    local line="  <Action name=\"$action\" shortcut=\"$shortcut\"/>"
+
+    if [ ! -f "$path" ]; then
+        mkdir -p "$(dirname "$path")"
+        cat > "$path" << EOF
+<?xml version='1.0'?>
+<!DOCTYPE gui SYSTEM 'kpartgui.dtd'>
+<gui name="$(basename "$rel" ui.rc)" version="1">
+ <ActionProperties scheme="Default">
+$line
+ </ActionProperties>
+</gui>
+EOF
+        return
+    fi
+
+    local tmp
+    tmp=$(mktemp)
+    ACTION="$action" LINE="$line" awk '
+        BEGIN { want = "<Action name=\"" ENVIRON["ACTION"] "\"" }
+        /<ActionProperties[ >]/ { in_props = 1; has_props = 1 }
+        in_props && index($0, want) { if (!done) print ENVIRON["LINE"]; done = 1; next }
+        in_props && /<\/ActionProperties>/ { if (!done) print ENVIRON["LINE"]; done = 1; in_props = 0 }
+        /<\/gui>/ && !has_props {
+            print " <ActionProperties scheme=\"Default\">"
+            print ENVIRON["LINE"]
+            print " </ActionProperties>"
+        }
+        { print }
+    ' "$path" > "$tmp"
+    cat "$tmp" > "$path"
+    rm -f "$tmp"
+}
+
+# Arch packages for a VS Code build
+vscode_packages() {
+    case "$1" in
+        "Code") echo "visual-studio-code-bin" ;;
+        "Code - OSS") echo "code" ;;
+        "VSCodium") echo "vscodium-bin vscodium" ;;
+    esac
+}
+
+# Copy saved keybindings to every VS Code build that is installed or has a config dir
+apply_vscode_keybindings() {
+    local src="$1" variant pkg dest applied=0
+    if [ ! -f "$src" ]; then
+        print_warning "VS Code keybindings not found: $src, skipping"
+        return
+    fi
+
+    for variant in "${VSCODE_VARIANTS[@]}"; do
+        local present=false
+        [ -d "$CONFIG_DIR/$variant" ] && present=true
+        for pkg in $(vscode_packages "$variant"); do
+            pacman -Q "$pkg" &>/dev/null && present=true
+        done
+        [ "$present" = true ] || continue
+
+        dest="$CONFIG_DIR/$variant/User/keybindings.json"
+        applied=$((applied + 1))
+        if cmp -s "$src" "$dest"; then
+            print_status "$variant keybindings already up to date"
+            continue
+        fi
+        backup_file "$dest" "$variant/User/keybindings.json"
+        mkdir -p "$(dirname "$dest")"
+        cp "$src" "$dest"
+        print_status "$variant keybindings applied"
+    done
+
+    if [ "$applied" -eq 0 ]; then
+        print_warning "VS Code is not installed, skipping keybindings (re-run apply after developer-install)"
+    fi
+}
+
 check_root() {
     if [ "$EUID" -eq 0 ]; then
         print_error "Please do not run this script as root"
@@ -176,6 +288,24 @@ export_settings() {
                 if (f[1] != f[2]) print "kglobalshortcutsrc|" group "|" key "|" value
             }
         ' "$shortcuts"
+        echo ""
+        echo "# Konsole shortcuts (also used by Yakuake): @kxmlgui|file in kxmlgui5|action|shortcut"
+        local rel
+        for rel in "${KXMLGUI_FILES[@]}"; do
+            if [ -f "$DATA_DIR/kxmlgui5/$rel" ]; then
+                read_kxmlgui_shortcuts "$DATA_DIR/kxmlgui5/$rel" | sed "s#^#@kxmlgui|$rel|#"
+            fi
+        done
+        local variant
+        for variant in "${VSCODE_VARIANTS[@]}"; do
+            if [ -f "$CONFIG_DIR/$variant/User/keybindings.json" ]; then
+                cp "$CONFIG_DIR/$variant/User/keybindings.json" "$SCRIPT_DIR/$VSCODE_KEYBINDINGS_NAME"
+                echo ""
+                echo "# VS Code keybindings (exported from $variant, applied to every installed VS Code build)"
+                echo "@vscode|User|keybindings.json|$VSCODE_KEYBINDINGS_NAME"
+                break
+            fi
+        done
     } > "$SETTINGS_FILE"
 
     print_status "Saved settings to $SETTINGS_FILE"
@@ -212,15 +342,29 @@ apply_settings() {
             print_status "Backed up $CONFIG_DIR/$file"
         fi
     done
+    for file in "${KXMLGUI_FILES[@]}"; do
+        backup_file "$DATA_DIR/kxmlgui5/$file" "kxmlgui5/$file"
+    done
 
-    local file group key value count=0 launcher_icon=""
+    local file group key value count=0 launcher_icon="" vscode_file=""
     while IFS='|' read -r file group key value; do
         [[ -z "$file" || "$file" == \#* ]] && continue
-        if [ "$file" = "@launcher" ]; then
-            launcher_icon="$value"
-            continue
-        fi
-        kwriteconfig6 --file "$file" --group "$group" --key "$key" -- "$(unescape_kconfig "$value")"
+        case "$file" in
+            @launcher)
+                launcher_icon="$value"
+                continue
+                ;;
+            @vscode)
+                vscode_file="$SCRIPT_DIR/$value"
+                continue
+                ;;
+            @kxmlgui)
+                apply_kxmlgui_shortcut "$group" "$key" "$value"
+                ;;
+            *)
+                kwriteconfig6 --file "$file" --group "$group" --key "$key" -- "$(unescape_kconfig "$value")"
+                ;;
+        esac
         count=$((count + 1))
     done < "$SETTINGS_FILE"
     print_status "Applied $count settings"
@@ -235,24 +379,31 @@ apply_settings() {
         apply_launcher_icon "$launcher_icon"
     fi
 
+    if [ -n "$vscode_file" ]; then
+        apply_vscode_keybindings "$vscode_file"
+    fi
+
     echo ""
     print_header "Settings applied!"
     echo ""
     print_warning "IMPORTANT: Log out and log back in for shortcuts and audio feedback to take effect!"
+    echo "Konsole, Yakuake and VS Code pick up their shortcuts when restarted."
     echo ""
     echo "Backup of previous config: $BACKUP_DIR"
-    echo "To undo, copy the files from the backup back to $CONFIG_DIR and log out."
+    echo "To undo, copy the files from the backup back to $CONFIG_DIR"
+    echo "(the kxmlgui5 folder goes to $DATA_DIR) and log out."
     echo ""
 }
 
 show_usage() {
     cat << EOF
-Personal KDE Plasma settings (custom shortcuts, keyboard layouts, launcher icon, audio feedback)
+Personal KDE Plasma settings (custom shortcuts, keyboard layouts, launcher icon, audio feedback,
+Konsole/Yakuake and VS Code shortcuts)
 
 Usage: $0 [command]
 
 Commands:
-  apply     Apply settings.conf to this machine (default)
+  apply     Apply settings.conf (and $VSCODE_KEYBINDINGS_NAME) to this machine (default)
   export    Save this machine's custom shortcuts and layouts to settings.conf
 
 Notes:
