@@ -68,16 +68,42 @@ else
     print_status "yay already installed"
 fi
 
-# Remove regular wine if installed
-if pacman -Qi wine &>/dev/null; then
-    print_status "Removing regular wine package..."
-    sudo pacman -Rns --noconfirm wine
+# Wine variant selection
+echo ""
+echo "Choose Wine variant:"
+echo "  1) Wine Staging (latest patches and features) [default]"
+echo "  2) Wine (stable upstream release)"
+read -p "Enter your choice (1-2) [1]: " wine_choice
+wine_choice=${wine_choice:-1}
+
+case $wine_choice in
+    2)
+        WINE_PKG="wine"
+        WINE_CONFLICT_PKG="wine-staging"
+        WINE_NAME="Wine"
+        WINE_PREFIX_DIR="$HOME/.wine"
+        ;;
+    *)
+        if [ "$wine_choice" != "1" ]; then
+            print_warning "Invalid choice, installing Wine Staging (default)"
+        fi
+        WINE_PKG="wine-staging"
+        WINE_CONFLICT_PKG="wine"
+        WINE_NAME="Wine Staging"
+        WINE_PREFIX_DIR="$HOME/.wine-staging"
+        ;;
+esac
+
+# wine and wine-staging conflict, so remove the one not chosen
+if pacman -Qi "$WINE_CONFLICT_PKG" &>/dev/null; then
+    print_status "Removing $WINE_CONFLICT_PKG package..."
+    sudo pacman -Rns --noconfirm "$WINE_CONFLICT_PKG" || print_warning "Failed to remove $WINE_CONFLICT_PKG, continuing..."
 fi
 
-# Install Wine Staging
-print_status "Installing Wine Staging and dependencies..."
+# Install chosen Wine variant
+print_status "Installing $WINE_NAME and dependencies..."
 sudo pacman -S --needed --noconfirm \
-    wine-staging \
+    "$WINE_PKG" \
     winetricks \
     lib32-gnutls \
     lib32-libldap \
@@ -86,14 +112,11 @@ sudo pacman -S --needed --noconfirm \
     lib32-libpulse \
     lib32-alsa-plugins || print_warning "Some Wine packages failed to install, continuing..."
 
-# Verify Wine Staging installation
-if command -v wine &>/dev/null; then
-    wine_version=$(wine --version 2>&1)
-    if echo "$wine_version" | grep -qi "staging"; then
-        print_status "Wine Staging verified: $wine_version"
-    else
-        print_warning "Wine installed but not staging version: $wine_version"
-    fi
+# Verify Wine installation
+if pacman -Q "$WINE_PKG" &>/dev/null; then
+    print_status "$WINE_NAME verified: $(wine --version 2>&1)"
+else
+    print_warning "$WINE_NAME package not found after installation"
 fi
 
 # Install gaming packages from official repos
@@ -251,9 +274,9 @@ fi
 print_status "Configuring gamemode..."
 sudo usermod -aG gamemode $USER
 
-# Create Wine prefix with staging
-print_status "Creating Wine Staging prefix..."
-WINEPREFIX=~/.wine-staging WINEARCH=win64 wineboot &>/dev/null || print_warning "Wine prefix creation encountered an issue, you may need to run it manually"
+# Create Wine prefix
+print_status "Creating $WINE_NAME prefix at $WINE_PREFIX_DIR..."
+WINEPREFIX="$WINE_PREFIX_DIR" WINEARCH=win64 wineboot &>/dev/null || print_warning "Wine prefix creation encountered an issue, you may need to run it manually"
 
 # Enable GameMode for Steam
 print_status "Setting up Steam launch options helper..."
@@ -266,24 +289,27 @@ cat > ~/.local/share/Steam/steam_launch_options.txt << 'EOF'
 # For Gamescope: gamescope -f -w 2560 -h 1440 -- %command%
 EOF
 
-print_status "Creating helpful aliases..."
-if ! grep -q "# Gaming aliases" ~/.bashrc 2>/dev/null; then
-    cat >> ~/.bashrc << 'EOF'
+# Staging uses its own prefix, so add aliases for it (plain wine uses ~/.wine by default)
+if [ "$WINE_PKG" = "wine-staging" ]; then
+    print_status "Creating helpful aliases..."
+    if ! grep -q "# Gaming aliases" ~/.bashrc 2>/dev/null; then
+        cat >> ~/.bashrc << 'EOF'
 
 # Gaming aliases
 alias wine-staging='WINEPREFIX=~/.wine-staging wine'
 alias winetricks-staging='WINEPREFIX=~/.wine-staging winetricks'
 EOF
-    print_status "Gaming aliases added to ~/.bashrc"
-else
-    print_status "Gaming aliases already exist in ~/.bashrc"
+        print_status "Gaming aliases added to ~/.bashrc"
+    else
+        print_status "Gaming aliases already exist in ~/.bashrc"
+    fi
 fi
 
 echo ""
 print_header "Installation complete!"
 echo ""
 echo "Installed packages:"
-echo "  - Wine Staging (instead of regular Wine)"
+echo "  - $WINE_NAME"
 echo "  - Steam"
 echo "  - Discord client (based on your choice)"
 echo "  - Waterfox"
@@ -305,7 +331,11 @@ echo "  2. Run 'steam' to set up Steam"
 echo "  3. Use ProtonUp-Qt to install Proton-GE"
 echo "  4. Check ~/.local/share/Steam/steam_launch_options.txt for launch options"
 echo ""
-echo "Wine Staging usage:"
-echo "  - Use 'wine-staging' command or set WINEPREFIX=~/.wine-staging"
-echo "  - Default prefix created at: ~/.wine-staging"
+echo "$WINE_NAME usage:"
+if [ "$WINE_PKG" = "wine-staging" ]; then
+    echo "  - Use 'wine-staging' command or set WINEPREFIX=~/.wine-staging"
+else
+    echo "  - Use 'wine' command (uses the default prefix)"
+fi
+echo "  - Prefix created at: $WINE_PREFIX_DIR"
 echo ""
