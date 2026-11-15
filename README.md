@@ -6,7 +6,8 @@ A collection of scripts to automate package installation on fresh Arch Linux ins
 
 - **install.sh** - Main gaming environment setup script
 - **install-flatpak.sh** - Flatpak and Discover store manager setup
-- **install-gaming-mouse.sh** - Gaming mouse configuration (ratbagd & Piper)
+- **sunshine/install-sunshine.sh** - Sunshine game streaming host (AUR) with GPU encoder deps; `--disable` to stop its services
+- **gaming-mouse/install-gaming-mouse.sh** - Gaming mouse configuration: Piper (libratbag), plus rivalcfg for SteelSeries and Solaar for Logitech when detected
 - **developer-install/install-dev.sh** - Developer tools: VS Code, Go, Python, Rust
 - **gpu-control/install-gpu-control.sh** - LACT GPU control (fan curves, power, clocks), AMD tools and overclocking unlock
 - **kde-settings/apply-kde-settings.sh** - Restore my personal KDE setup: custom keybinds, keyboard layouts, Arch logo on the application launcher and disabled volume audio feedback
