@@ -11,6 +11,11 @@
         "when": "chatInputHasFocus"
     },
     {
+        "key": "ctrl+c",
+        "command": "workbench.action.terminal.copySelection",
+        "when": "terminalFocus && terminalTextSelected"
+    },
+    {
         "key": "ctrl+v",
         "command": "workbench.action.terminal.paste",
         "when": "terminalFocus && terminalHasBeenCreated || terminalFocus && terminalProcessSupported"
